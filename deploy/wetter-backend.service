@@ -1,0 +1,20 @@
+[Unit]
+Description=Dachstation Backend (FastAPI)
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=wetter
+Group=wetter
+WorkingDirectory=/opt/wetter-station/backend
+EnvironmentFile=/opt/wetter-station/.env
+ExecStart=/opt/wetter-station/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+# Ressourcen auf dem Pi 3B+ schonen
+MemoryMax=350M
+
+[Install]
+WantedBy=multi-user.target

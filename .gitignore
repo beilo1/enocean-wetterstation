@@ -1,0 +1,40 @@
+# Lokale Konfiguration
+.env
+.env.*
+!.env.example
+
+# Python-Arbeitsdateien
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Installationsartefakt
+/frontend/vendor/echarts.min.js
+
+# Messdaten, Diagnoseprotokolle und Sicherungen
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.csv
+*.log
+*.dump
+*.backup
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.sql.gz
+/backup/
+/backups/
+
+# Lokales Schlüsselmaterial
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt

@@ -1,0 +1,5 @@
+pyserial==3.5
+# Reines Python-psycopg (nutzt System-libpq).
+# Auf armv7l/Python 3.13 gibt es kein psycopg-binary; die System-Variante
+# ist robust und benötigt nur das libpq5-Paket.
+psycopg==3.2.3

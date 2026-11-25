@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f6f0" />
+  <title>Wetterstation • Kalender</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/css/styles.css?v=2.0.2" />
+  <script src="/js/site.js?v=2.0.2" defer></script>
+</head>
+<body class="dashboard">
+  <a class="skip-link" href="#content">Zum Inhalt</a>
+  <header class="app-header">
+    <div class="shell masthead">
+      <a class="wordmark" href="/" aria-label="Dachstation, Übersicht">
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M5 20 16 10l11 10M10 18v8h12v-8M16 4v2M25 8l-2 2M7 8l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Dachstation
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a href="/">Übersicht</a>
+        <a href="/#innen">Raumklima</a>
+        <a href="/heatmap" class="current" aria-current="page">Kalender</a>
+        <a href="/docs-app">Dokumentation</a>
+        <a href="/api-docs">API</a>
+        <a href="/maintenance">Wartung</a>
+      </nav>
+      <button class="icon-button" id="themeBtn" type="button" aria-label="Farbschema wechseln" title="Farbschema wechseln">☾</button>
+    </div>
+  </header>
+
+  <main class="shell subpage" id="content">
+    <div class="page-heading"><div><h1>Kalender</h1><p>Die Tageswerte deiner Dachstation im Jahresüberblick.</p></div></div>
+    <section class="card content-card calendar-card" aria-labelledby="metricLabel">
+      <div class="section-heading calendar-controls">
+        <div><h2 id="metricLabel">Höchsttemperatur</h2><p id="calendarDetail" aria-live="polite">Wähle einen Tag für Details.</p></div>
+        <label class="control-label">Jahr <select class="field" id="calendarYear"></select></label>
+      </div>
+      <div class="segments" id="calendarMetrics" role="group" aria-label="Messgröße">
+        <button type="button" data-metric="temp_max" aria-pressed="true">Höchsttemp.</button>
+        <button type="button" data-metric="temp_min" aria-pressed="false">Tiefsttemp.</button>
+        <button type="button" data-metric="temp_avg" aria-pressed="false">Ø Temperatur</button>
+        <button type="button" data-metric="wind_max" aria-pressed="false">Max. Wind</button>
+        <button type="button" data-metric="south_max" aria-pressed="false">Max. Südlicht</button>
+        <button type="button" data-metric="rain_any" aria-pressed="false">Regentage</button>
+      </div>
+      <div id="heatmap" class="heatmap-wrap" tabindex="0" aria-label="Tageswerte, horizontal scrollbar"></div>
+      <div class="calendar-legend" id="legend"></div>
+      <dl class="calendar-metrics" id="calendarSummary" hidden>
+        <div id="calendarMin"><dt>Minimum</dt><dd id="calendarMinValue">–</dd></div>
+        <div><dt id="calendarValueLabel">Durchschnitt</dt><dd id="calendarValue">–</dd></div>
+        <div id="calendarMax"><dt>Maximum</dt><dd id="calendarMaxValue">–</dd></div>
+        <div><dt>Tage mit Messwert</dt><dd id="hmDays">–</dd></div>
+        <div><dt>Tage ohne Messwert</dt><dd id="hmGaps">–</dd></div>
+      </dl>
+      <p id="calendarStatus" class="page-message" role="status"></p>
+    </section>
+    <section class="card content-card calendar-year" id="yearStatsPanel" aria-labelledby="calendarStatsTitle" hidden>
+      <div class="card-heading"><div><h2 id="calendarStatsTitle">Jahresstatistik</h2><p id="calendarStatsSubtitle"></p></div></div>
+      <dl class="calendar-metrics calendar-records" id="ysCounts"></dl>
+      <dl class="calendar-highlights" id="ysHighlights"></dl>
+    </section>
+  </main>
+  <script src="/js/heatmap.js?v=2.0.2" defer></script>
+  <footer class="shell site-footer"><span>Dachstation · Eltako WMS und Raspberry Pi</span></footer>
+</body>
+</html>

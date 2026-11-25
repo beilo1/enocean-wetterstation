@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6f0">
+  <title>Wetterstation • Übersicht</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css?v=2.0.2">
+  <script src="/js/site.js?v=2.0.2" defer></script>
+  <script src="/vendor/echarts.min.js" defer></script>
+  <script src="/js/charts.js?v=2.0.2" defer></script>
+  <script src="/js/app.js?v=2.0.2" defer></script>
+</head>
+<body class="dashboard">
+  <a class="skip-link" href="#content">Zum Inhalt</a>
+  <header class="app-header">
+    <div class="shell masthead">
+      <a class="wordmark" href="/" aria-label="Dachstation, Übersicht">
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M5 20 16 10l11 10M10 18v8h12v-8M16 4v2M25 8l-2 2M7 8l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Dachstation
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a href="/" class="current" aria-current="page">Übersicht</a>
+        <a href="/#innen">Raumklima</a>
+        <a href="/heatmap">Kalender</a>
+        <a href="/docs-app">Dokumentation</a>
+        <a href="/api-docs">API</a>
+        <a href="/maintenance">Wartung</a>
+      </nav>
+      <button class="icon-button" id="themeBtn" type="button" aria-label="Farbschema wechseln" title="Farbschema wechseln">☾</button>
+    </div>
+  </header>
+
+  <main class="shell" id="content">
+    <h1 class="visually-hidden">Wetterübersicht</h1>
+    <div class="page-heading dashboard-meta">
+      <div>
+        <p class="date-line" id="todayLabel"></p>
+      </div>
+      <div class="station-status" id="stationStatus"><span class="status-dot"></span><span id="stationStatusText">Stationsstatus wird geladen</span></div>
+    </div>
+
+    <section class="overview-grid" aria-label="Aktuelles Wetter">
+      <article class="current-card">
+        <div class="current-head"><h2>Dachstation</h2><span id="measuredAt">Letzte Messung wird geladen</span></div>
+        <div class="current-reading">
+          <div><div class="reading-label">Außentemperatur</div><strong id="temperatureNow">–</strong><span class="temperature-unit">°C</span></div>
+          <div class="light-rose" aria-label="Helligkeit aus West, Süd und Ost">
+            <svg viewBox="0 0 132 108" aria-hidden="true">
+              <g fill="none" stroke="currentColor" opacity=".38"><circle cx="66" cy="62" r="16"/><circle cx="66" cy="62" r="29"/><circle cx="66" cy="62" r="42"/><path d="M66 20v84M24 62h84"/></g>
+              <path id="lightSouth" fill="#f1ba62"/><path id="lightWest" fill="#ee9567"/><path id="lightEast" fill="#99c5e5"/>
+              <circle cx="66" cy="62" r="3" fill="currentColor"/>
+              <g fill="currentColor" text-anchor="middle"><text x="66" y="14">S</text><text x="13" y="66">W</text><text x="119" y="66">O</text></g>
+            </svg>
+          </div>
+        </div>
+        <div class="current-metrics">
+          <div><span data-icon="wind" aria-hidden="true"></span><span>Wind<strong id="windNow">–</strong></span></div>
+          <div><span data-icon="sunrise" aria-hidden="true"></span><span>Dämmerung<strong id="duskNow">–</strong></span></div>
+          <div><span data-icon="sun" aria-hidden="true"></span><span>Helligkeit Süd<strong id="lightNow">–</strong></span></div>
+        </div>
+      </article>
+
+      <article class="card forecast-card">
+        <div class="card-heading">
+          <div><h2>Stundenprognose</h2><p id="forecastCaption">Prognose wird geladen …</p></div>
+          <div class="forecast-nav" aria-label="Prognose blättern">
+            <button class="icon-button" id="forecastBack" type="button" aria-label="Frühere Prognosestunden" aria-controls="forecastHours" disabled><span data-icon="left" aria-hidden="true"></span></button>
+            <button class="icon-button" id="forecastNext" type="button" aria-label="Spätere Prognosestunden" aria-controls="forecastHours" disabled><span data-icon="right" aria-hidden="true"></span></button>
+          </div>
+        </div>
+        <div class="forecast-hours" id="forecastHours" aria-label="Stündliche Prognose" tabindex="0"></div>
+        <div class="forecast-footer"><span><span data-icon="drop" aria-hidden="true"></span> Niederschlagschance</span><span><a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></span></div>
+      </article>
+    </section>
+
+    <section class="rain-card" aria-labelledby="rainTitle">
+      <span class="heading-icon rain-icon" data-icon="drop" aria-hidden="true"></span>
+      <div class="rain-summary"><h2 id="rainTitle">Regen an der Dachstation</h2><p id="rainStatus">Regenstatus wird geladen …</p></div>
+      <dl class="rain-metrics">
+        <div><dt id="rainSinceLabel">Letzter Regen</dt><dd id="rainSince">–</dd></div>
+        <div><dt>Dauer des Ereignisses</dt><dd id="rainDuration">–</dd></div>
+      </dl>
+    </section>
+
+    <div class="section-heading trends-heading" id="verlauf">
+      <div><h2>Messverläufe</h2><p>Zeitraum für Außen- und Innenmessungen</p></div>
+      <div class="section-actions">
+        <div class="segments" id="rangePicker" aria-label="Zeitraum">
+          <button type="button" data-range="24h" aria-pressed="true">24 Std.</button>
+          <button type="button" data-range="7d" aria-pressed="false">7 Tage</button>
+          <button type="button" data-range="30d" aria-pressed="false">30 Tage</button>
+          <button type="button" data-range="365d" aria-pressed="false">12 Monate</button>
+          <button type="button" data-range="custom" aria-pressed="false">Eigener</button>
+        </div>
+        <button class="outline-button" id="csvBtn" type="button"><span data-icon="download" aria-hidden="true"></span> CSV</button>
+      </div>
+    </div>
+    <form class="custom-range" id="customRange" hidden>
+      <label>Von <input type="date" name="start" required></label>
+      <label>Bis <input type="date" name="end" required></label>
+      <button class="outline-button" type="submit">Anzeigen</button>
+      <span id="rangeError" role="status"></span>
+    </form>
+    <p class="chart-status" id="trendStatus" role="status" hidden></p>
+
+    <section class="card chart-card temperature-card" aria-labelledby="outTitle">
+      <div class="card-heading">
+        <div><h3 id="outTitle">Außentemperatur</h3><p id="outCaption">Dachstation und DWD-Vergleich</p></div>
+        <span class="heading-icon temperature-icon" data-icon="thermometer" aria-hidden="true"></span>
+      </div>
+      <div class="chart-meta"><div class="legend"><span><i class="key local-key"></i>Dachstation</span><span id="dwdLegend" hidden><i class="key dwd-key"></i><span id="dwdName">DWD</span></span></div><span id="tempStats"></span></div>
+      <p class="point-count" id="chartTempCount" hidden></p>
+      <div class="chart" id="chartTemp" role="img" aria-label="Außentemperatur der Dachstation und der DWD-Vergleichsstation"></div>
+    </section>
+
+    <section class="card chart-card indoor-card" id="innen" aria-labelledby="inTitle">
+      <div class="card-heading"><div><h3 id="inTitle">Raumklima</h3><p>Temperaturverlauf deiner Govee-Sensoren</p></div><span class="heading-icon indoor-icon" data-icon="home" aria-hidden="true"></span></div>
+      <div id="indoorDevices" class="device-list" role="group" aria-label="Sensoren im Diagramm anzeigen"></div>
+      <p class="point-count" id="chartIndoorCount" hidden></p>
+      <div class="chart" id="chartIndoor" role="img" aria-label="Innentemperatur nach Govee-Sensor"></div>
+      <div class="comfort-strip" id="comfortStrip" hidden>
+        <div><strong id="comfortDevice"></strong><span id="comfortHint"></span></div>
+        <dl><div><dt>Feuchte</dt><dd id="comfortHum">–</dd></div><div><dt>Taupunkt</dt><dd id="comfortDew">–</dd></div><div id="comfortFeelsWrap" hidden><dt>Gefühlt</dt><dd id="comfortFeels">–</dd></div></dl>
+      </div>
+    </section>
+
+    <section class="other-charts" aria-label="Weitere Außenmessungen">
+      <article class="card chart-card"><div class="card-heading"><div><h3>Wind</h3><p>Mittlere und höchste Messung je Intervall</p></div><span class="heading-icon wind-icon" data-icon="wind" aria-hidden="true"></span></div><p class="point-count" id="chartWindCount" hidden></p><div class="chart" id="chartWind" role="img" aria-label="Windgeschwindigkeit in Metern pro Sekunde"></div></article>
+      <article class="card chart-card"><div class="card-heading"><div><h3>Richtungshelligkeit</h3><p>West, Süd und Ost im Vergleich</p></div><span class="heading-icon temperature-icon" data-icon="sun" aria-hidden="true"></span></div><p class="point-count" id="chartLightCount" hidden></p><div class="chart" id="chartLight" role="img" aria-label="Helligkeit in Kilolux nach Richtung"></div></article>
+      <article class="card chart-card"><div class="card-heading"><div><h3>Dämmerung</h3><p>Helligkeit am Dämmerungssensor</p></div><span class="heading-icon indoor-icon" data-icon="sunrise" aria-hidden="true"></span></div><p class="point-count" id="chartDuskCount" hidden></p><div class="chart" id="chartDusk" role="img" aria-label="Dämmerungsmessung in Lux"></div></article>
+    </section>
+  </main>
+  
+  <footer class="shell site-footer"><span>Dachstation · Eltako WMS und Raspberry Pi</span></footer>
+</body>
+</html>

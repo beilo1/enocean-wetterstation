@@ -1,0 +1,21 @@
+[Unit]
+Description=Dachstation EnOcean Ingestor
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=wetter
+Group=wetter
+# Zugriff auf die serielle Schnittstelle (Gruppe dialout)
+SupplementaryGroups=dialout
+WorkingDirectory=/opt/wetter-station/ingestor
+EnvironmentFile=/opt/wetter-station/.env
+ExecStart=/opt/wetter-station/venv/bin/python enocean_ingestor.py
+Restart=always
+RestartSec=5
+MemoryMax=120M
+
+[Install]
+WantedBy=multi-user.target

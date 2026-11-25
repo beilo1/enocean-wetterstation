@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f6f0" />
+  <title>Wetterstation • API</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/css/styles.css?v=2.0.2" />
+
+  <script src="/js/site.js?v=2.0.2" defer></script>
+</head>
+<body class="dashboard">
+  <a class="skip-link" href="#content">Zum Inhalt</a>
+  <header class="app-header">
+    <div class="shell masthead">
+      <a class="wordmark" href="/" aria-label="Dachstation, Übersicht">
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M5 20 16 10l11 10M10 18v8h12v-8M16 4v2M25 8l-2 2M7 8l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Dachstation
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a href="/">Übersicht</a>
+        <a href="/#innen">Raumklima</a>
+        <a href="/heatmap">Kalender</a>
+        <a href="/docs-app">Dokumentation</a>
+        <a href="/api-docs" class="current" aria-current="page">API</a>
+        <a href="/maintenance">Wartung</a>
+      </nav>
+      <button class="icon-button" id="themeBtn" type="button" aria-label="Farbschema wechseln" title="Farbschema wechseln">☾</button>
+    </div>
+  </header>
+
+  <main class="shell subpage" id="content">
+    <div class="page-heading"><div><h1>API</h1><p>Endpunkte ansehen und Anfragen direkt an diese Wetterstation senden.</p></div><a class="outline-button" href="/openapi.json"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#json"></use></svg> OpenAPI-JSON öffnen</a></div>
+    <label class="control-label api-search">Endpunkt suchen <input type="search" class="field" id="apiSearch" placeholder="z. B. Regen oder /api/indoor" disabled></label>
+    <p id="apiMessage" class="page-message" role="status">API-Schema wird geladen …</p>
+    <div id="apiEndpoints"></div>
+  </main>
+  <script src="/js/api.js?v=2.0.2" defer></script>
+  <footer class="shell site-footer"><span>Dachstation · Eltako WMS und Raspberry Pi</span></footer>
+</body>
+</html>

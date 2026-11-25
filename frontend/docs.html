@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wetterstation • Dokumentation</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css?v=2.0.2">
+  <meta name="theme-color" content="#f7f6f0">
+  <script src="/js/site.js?v=2.0.2" defer></script>
+</head>
+<body class="dashboard">
+  <a class="skip-link" href="#content">Zum Inhalt</a>
+  <header class="app-header">
+    <div class="shell masthead">
+      <a class="wordmark" href="/" aria-label="Dachstation, Übersicht">
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M5 20 16 10l11 10M10 18v8h12v-8M16 4v2M25 8l-2 2M7 8l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Dachstation
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a href="/">Übersicht</a>
+        <a href="/#innen">Raumklima</a>
+        <a href="/heatmap">Kalender</a>
+        <a href="/docs-app" class="current" aria-current="page">Dokumentation</a>
+        <a href="/api-docs">API</a>
+        <a href="/maintenance">Wartung</a>
+      </nav>
+      <button class="icon-button" id="themeBtn" type="button" aria-label="Farbschema wechseln" title="Farbschema wechseln">☾</button>
+    </div>
+  </header>
+  <main class="shell subpage" id="content">
+    <div class="page-heading"><div><h1>Dokumentation</h1><p>Datenquellen, Auswertungen und Betrieb der Wetterstation.</p></div><a class="outline-button" href="/install-guide.md" download="DEPLOY.md" aria-label="Installationsanleitung herunterladen"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#download"></use></svg> Herunterladen</a></div>
+    <nav class="section-links" aria-label="Inhalt der Dokumentation">
+      <a class="outline-button" href="#datenquellen">Datenquellen</a>
+      <a class="outline-button" href="#messdaten">Messverläufe</a>
+      <a class="outline-button" href="#raumklima">Raumklima</a>
+      <a class="outline-button" href="#betrieb">Betrieb und API</a>
+    </nav>
+    <article>
+      <section class="card content-card" id="installation"><h2>Installation und Update</h2>
+      <p>Die <a href="/install-guide.md">Installationsanleitung</a> beschreibt Neuinstallation, Update einer bestehenden PostgreSQL-Installation, optionalen SQLite-Import, Funktionsprüfung und Rückkehr zur vorherigen Version.</p>
+      </section>
+      <section class="card content-card" id="datenquellen"><h2>Datenquellen im Überblick</h2>
+      <div class="docs-table-scroll"><table>
+        <thead><tr><th>Quelle</th><th>Erfassung</th><th>Speicherung</th></tr></thead>
+        <tbody>
+          <tr><td>Eltako WMS</td><td>EnOcean über ein Funk-Sendemodul und einen seriellen ESP3-Empfänger, etwa einen USB-Stick oder Fam4Pi. Die Dachstation liefert Temperatur, Wind, Dämmerung, West-/Süd-/Ost-Helligkeit und ein binäres Regensignal.</td><td>PostgreSQL in <code>readings</code></td></tr>
+          <tr><td>DWD · Bright Sky</td><td>Stündliche Messwerte für Temperatur und Wind. Stations-ID oder Standort über <code>.env</code> einstellbar.</td><td><code>dwd_readings</code></td></tr>
+          <tr><td>Govee</td><td>Regelmäßige Abfrage von Temperatur und Luftfeuchte. Unterstützte Sensoren werden automatisch erkannt, wenn <code>GOVEE_DEVICE_IDS</code> leer ist.</td><td><code>indoor_readings</code></td></tr>
+          <tr><td>Open-Meteo</td><td>Wetterzustand, Temperatur und Niederschlag in Stundenauflösung für die konfigurierten Standortkoordinaten.</td><td>Gemeinsamer Zwischenspeicher im Backend</td></tr>
+        </tbody>
+      </table></div>
+      </section>
+      <section class="card content-card" id="messdaten"><h2>Messverläufe und Regen</h2>
+      <p>Das Außendiagramm zeigt Dachstation und DWD-Vergleich. Die Dachstation nutzt für 24 Stunden fünfminütige Werte aus den Rohmessungen, für sieben und 30 Tage <code>readings_hourly</code> und für 365 Tage <code>readings_daily</code>. Der Kalender nutzt ebenfalls Tageswerte. Für eigene Zeiträume gelten Wechsel der Auflösung nach zwei und 45 Tagen.</p>
+      <p>Der Ingestor speichert das Regensignal als Nass oder Trocken. Eine trockene oder unbekannte Messung oder eine Lücke von mehr als standardmäßig fünf Minuten beendet die Zusammenfassung eines Ereignisses. Die angezeigte Dauer reicht von der ersten bis zur letzten nassen Messung. Bei einer einzelnen nassen Messung oder einem fehlenden Beginn ist die Dauer nur näherungsweise bekannt. Ein veraltetes Regensignal wird als unbekannt angezeigt.</p>
+      </section>
+      <section class="card content-card" id="raumklima"><h2>Raumklima</h2>
+      <p>Die Innenkurve hat eine eigene Temperaturskala. Die Geräteschalter gelten für das Diagramm und werden in diesem Browser gespeichert. Neben jedem Sensor steht die Anzahl der Temperaturpunkte für die gewählte Auflösung. Einzelne oder durch Lücken getrennte Messungen erscheinen als Punkte. Geräte mit ausschließlich Feuchtemessungen werden entsprechend gekennzeichnet. Neue Geräte haben erst ab dem ersten erfolgreichen Abfragezyklus eine Historie.</p>
+      <p>Die Govee-Temperatur wird vor dem Speichern in °C normalisiert. Die Standard-Eingangseinheit ist Fahrenheit. Geräte mit abweichender API-Einheit lassen sich in der Konfiguration festlegen. Die Raumklima-Zusammenfassung verwendet die jüngste vollständige Temperatur- und Feuchtemessung. Der Taupunkt wird mit der Magnus-Formel berechnet. Der Hitzeindex wird ab 26 °C berechnet und eingeblendet, wenn er um mindestens 0,5 °C von der gemessenen Temperatur abweicht.</p>
+      </section>
+      <section class="card content-card" id="prognose"><h2>Prognose</h2>
+      <p>Standardmäßig werden zwölf künftige Stunden dargestellt. Der Server aktualisiert sie alle 30 Minuten. Nach einem fehlgeschlagenen Abruf bleiben passende zukünftige Stunden des letzten erfolgreichen Abrufs bis zu sechs Stunden verfügbar. Die Oberfläche zeigt den Stand des Abrufs. Die Niederschlagswahrscheinlichkeit und die im Tooltip verfügbare Menge beziehen sich auf die Stunde bis zur angegebenen Uhrzeit.</p>
+      <p><a href="https://open-meteo.com/en/docs">Open-Meteo API</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>
+      </section>
+      <section class="card content-card" id="betrieb"><h2>Betrieb und API</h2>
+      <p><code>wetter-ingestor</code> liest den EnOcean-Empfänger und schreibt direkt in PostgreSQL. <code>wetter-backend</code> startet FastAPI mit einem Uvicorn-Worker. Der Worker aktualisiert die Rollups und fragt bei aktivierten Integrationen Bright Sky, Govee und Open-Meteo ab. Die Dienste laden ihre Konfiguration aus <code>/opt/wetter-station/.env</code>.</p>
+      <ul>
+        <li><code>/healthz</code> prüft die Datenbankverbindung. <code>/api/health</code> meldet den Zustand der Dachstation.</li>
+        <li><code>/api/series</code>, <code>/api/latest</code>, <code>/api/sun</code>, <code>/api/dwd</code>, <code>/api/rain</code> und <code>/api/forecast</code> speisen die Übersicht.</li>
+        <li><code>/api/indoor</code> liefert Govee-Zeitreihen je Gerät. <code>/api/indoor/devices</code> listet Geräte mit gespeicherten Messungen.</li>
+        <li>Weitere Endpunkte für CSV, Kalender und Raumklima stehen in der <a href="/api-docs">API-Referenz</a>.</li>
+      </ul>
+      <p>Für Datensicherung und Pflege siehe <a href="/maintenance">Wartung</a>.</p>
+      </section>
+    </article>
+  </main>
+  
+  <footer class="shell site-footer"><span>Dachstation · Eltako WMS und Raspberry Pi</span></footer>
+</body>
+</html>

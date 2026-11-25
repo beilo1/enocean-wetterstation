@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f6f0" />
+  <title>Wetterstation • Wartung</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/css/styles.css?v=2.0.2" />
+
+  <script src="/js/site.js?v=2.0.2" defer></script>
+</head>
+<body class="dashboard">
+  <a class="skip-link" href="#content">Zum Inhalt</a>
+  <header class="app-header">
+    <div class="shell masthead">
+      <a class="wordmark" href="/" aria-label="Dachstation, Übersicht">
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M5 20 16 10l11 10M10 18v8h12v-8M16 4v2M25 8l-2 2M7 8l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Dachstation
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a href="/">Übersicht</a>
+        <a href="/#innen">Raumklima</a>
+        <a href="/heatmap">Kalender</a>
+        <a href="/docs-app">Dokumentation</a>
+        <a href="/api-docs">API</a>
+        <a href="/maintenance" class="current" aria-current="page">Wartung</a>
+      </nav>
+      <button class="icon-button" id="themeBtn" type="button" aria-label="Farbschema wechseln" title="Farbschema wechseln">☾</button>
+    </div>
+  </header>
+
+  <main class="shell subpage" id="content">
+    <div class="page-heading"><div><h1>Wartung</h1><p>Daten sichern, Messreihen prüfen und gezielt bereinigen.</p></div></div>
+    <nav class="section-links" aria-label="Wartungsbereiche">
+      <a class="outline-button" href="#backup">Sicherung</a><a class="outline-button" href="#aussen">Außenmessungen</a>
+      <a class="outline-button" href="#govee">Govee</a><a class="outline-button" href="#pruefen">Prüf-Abfragen</a>
+    </nav>
+    <article class="maint-content">
+      <section class="card content-card" id="datenpflege"><h2>Datenbestand bereinigen</h2>
+      <p>
+        Diese Seite bündelt SQL-Befehle, mit denen sich gezielt Datensätze aus
+        der PostgreSQL-Datenbank entfernen lassen – z. B. wenn unplausible Werte
+        gespeichert wurden oder du die Historie eines bestimmten Sensors auf
+        Null setzen willst. Die Befehle führst du im SSH-Terminal des Pi aus.
+      </p>
+
+      <div class="page-note page-note-warn">
+        <strong>Wichtig:</strong> Die Befehle zur Bereinigung verändern oder
+        löschen Daten <em>unwiderruflich</em>. Mache vorher einen Snapshot der
+        Tabellen, die du anfasst (siehe nächster Abschnitt).
+      </div>
+      </section>
+      <section class="card content-card" id="backup"><h2>Datensicherung</h2>
+      <p>Ein Tabellen-Dump als komprimierte SQL-Datei in deinem Home-Verzeichnis:</p>
+      <div class="cmd">
+        <span class="label">Backup aller Wetterstation-Daten</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres pg_dump wetter -t readings -t readings_hourly -t readings_daily \
+  | gzip &gt; ~/wetter_backup_$(date +%F_%H%M).sql.gz</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+      <div class="cmd">
+        <span class="label">Backup der Innensensor-Daten</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres pg_dump wetter -t indoor_readings \
+  | gzip &gt; ~/indoor_backup_$(date +%F_%H%M).sql.gz</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+      <p>Für eine Wiederherstellung den Dump zunächst in eine separate Testdatenbank einspielen. Die Installationsanleitung beschreibt außerdem den Code-Rollback.</p>
+      </section>
+      <section class="card content-card" id="aussen"><h2>Wetterstation – Datensätze bereinigen</h2>
+
+      <h3>Alle Daten der Wetterstation löschen</h3>
+      <p>Entfernt sowohl Rohdaten als auch die aggregierten Stunden- und Tageswerte. Beim nächsten Backend-Start sind die Rohdaten leer, neue Telegramme werden weiter empfangen.</p>
+      <div class="cmd">
+        <span class="label">DESTRUKTIV – alle Außenmessungen weg</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "TRUNCATE readings, readings_hourly, readings_daily;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+
+      <h3>Einzelne Messgröße auf NULL setzen</h3>
+      <p>
+        Behält die Zeitstempel und die anderen Spalten erhalten, leert aber die
+        ausgewählte Messgröße. Im Anschluss müssen die Aggregat-Tabellen neu
+        berechnet werden, sonst zeigen längere Ansichten noch die alten Werte.
+        Der entsprechende Befehl steht jeweils direkt darunter.
+      </p>
+
+      <div class="cmd">
+        <span class="label">Nur Temperatur leeren</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "UPDATE readings SET temperature_c = NULL;
+TRUNCATE readings_hourly, readings_daily;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+
+      <div class="cmd">
+        <span class="label">Nur Wind leeren</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "UPDATE readings SET wind_ms = NULL;
+TRUNCATE readings_hourly, readings_daily;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+
+      <div class="cmd">
+        <span class="label">Nur Helligkeit (West/Süd/Ost) leeren</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "UPDATE readings SET west_klux = NULL, south_klux = NULL, east_klux = NULL;
+TRUNCATE readings_hourly, readings_daily;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+
+      <div class="cmd">
+        <span class="label">Nur Regen-Markierung zurücksetzen</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "UPDATE readings SET rain = NULL;
+TRUNCATE readings_hourly, readings_daily;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+
+      <div class="cmd">
+        <span class="label">Nur Dämmerung leeren</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "UPDATE readings SET twilight_lux = NULL;
+TRUNCATE readings_hourly, readings_daily;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+
+      <h3>Aggregate neu aufbauen</h3>
+      <p>Beende das Backend vor Befehlen, die Rollups leeren. Andernfalls kann der laufende Refresh bereits neue Stundenzeilen schreiben und den vollständigen Neuaufbau überspringen. Beim folgenden Start baut das Backend leere Rollups aus vorhandenen Rohdaten neu auf. Wenn ältere Tage nur noch als Rollup vorliegen, sichere diese vor dem Leeren.</p>
+      <div class="cmd">
+        <span class="label">Nach der Datenpflege das zuvor gestoppte Backend starten</span>
+        <div class="snippet">
+          <pre><code>sudo systemctl start wetter-backend</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+
+      <h3>Datensätze in einem Zeitfenster löschen</h3>
+      <p>Ersetze <code>START_UTC</code> und <code>ENDE_UTC</code> durch Zeitangaben in der Form <code>YYYY-MM-DD HH:MM+00</code>.</p>
+      <div class="cmd">
+        <span class="label">Rohzeilen im Zeitbereich löschen</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "DELETE FROM readings
+WHERE time &gt;= 'START_UTC' AND time &lt; 'ENDE_UTC';
+TRUNCATE readings_hourly, readings_daily;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+      </section>
+      <section class="card content-card" id="govee"><h2>Innensensoren (Govee) – Datensätze bereinigen</h2>
+
+      <p>Bei falsch gespeicherten Fahrenheit-Werten siehe <a href="/install-guide.md">Installationsanleitung</a>. Dort ist eine gezielte Vorschau nach Gerät, Zeitraum und Wertebereich beschrieben.</p>
+      <h3>Alle Innensensor-Daten löschen</h3>
+      <div class="cmd">
+        <span class="label">DESTRUKTIV – alle Innenmessungen weg</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "TRUNCATE indoor_readings;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+
+      <h3>Nur ein bestimmtes Gerät behalten / löschen</h3>
+      <p>Die Geräte-IDs siehst du am bequemsten unter <a href="/api-docs" style="color:var(--wind)">/api-docs → GET /api/indoor/devices → Anfrage senden</a>.</p>
+      <div class="cmd">
+        <span class="label">Alles außer einem Gerät löschen (Wohnzimmer behalten)</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "DELETE FROM indoor_readings WHERE device_id &lt;&gt; 'DEINE_DEVICE_ID';"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+      <div class="cmd">
+        <span class="label">Nur ein bestimmtes Gerät löschen</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "DELETE FROM indoor_readings WHERE device_id = 'DEINE_DEVICE_ID';"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+
+      <h3>Einzelne Messgröße auf NULL setzen</h3>
+      <div class="cmd">
+        <span class="label">Nur Innen-Temperatur leeren</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "UPDATE indoor_readings SET temperature_c = NULL;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+      <div class="cmd">
+        <span class="label">Nur Luftfeuchtigkeit leeren</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "UPDATE indoor_readings SET humidity_pct = NULL;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+      </section>
+      <section class="card content-card" id="dwd"><h2>DWD-Vergleichsdaten</h2>
+      <p>Falls auch hier mal etwas aufgeräumt werden muss:</p>
+      <div class="cmd">
+        <span class="label">Alle DWD-Werte löschen (Backfill läuft beim Restart neu)</span>
+        <div class="snippet">
+          <pre><code>sudo systemctl stop wetter-backend &amp;&amp;
+sudo -u postgres psql -v ON_ERROR_STOP=1 wetter -c "TRUNCATE dwd_readings;" &amp;&amp;
+sudo systemctl start wetter-backend</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+      </section>
+      <section class="card content-card" id="pruefen"><h2>Prüf-Abfragen</h2>
+      <p>Schneller Blick auf den aktuellen Datenbestand:</p>
+      <div class="cmd">
+        <span class="label">Anzahl Datensätze und Zeitraum pro Tabelle</span>
+        <div class="snippet">
+          <pre><code>sudo -u postgres psql wetter -c "
+SELECT 'readings'         AS tabelle, count(*), min(time)::text AS älteste, max(time)::text AS neueste FROM readings
+UNION ALL SELECT 'readings_hourly', count(*), min(bucket)::text, max(bucket)::text FROM readings_hourly
+UNION ALL SELECT 'readings_daily',  count(*), min(bucket)::text, max(bucket)::text FROM readings_daily
+UNION ALL SELECT 'indoor_readings', count(*), min(time)::text, max(time)::text FROM indoor_readings
+UNION ALL SELECT 'dwd_readings',    count(*), min(time)::text, max(time)::text FROM dwd_readings;"</code></pre>
+          <button type="button" class="icon-button snippet-copy" aria-label="Code kopieren" title="Code kopieren"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#copy"></use></svg></button>
+        </div>
+      </div>
+      </section>
+</article>
+
+    
+    <span id="copyFeedback" class="visually-hidden" role="status"></span>
+  </main>
+  <script src="/js/maintenance.js?v=2.0.2" defer></script>
+  <footer class="shell site-footer"><span>Dachstation · Eltako WMS und Raspberry Pi</span></footer>
+</body>
+</html>
