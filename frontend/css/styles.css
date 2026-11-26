@@ -168,13 +168,16 @@ a.outline-button { text-decoration: none; }
 #rangeError, .chart-status { color: var(--temp); font-size: 14px; }
 .dashboard .chart-card { padding: 22px 24px 12px; }
 .dashboard .chart { height: 265px; }
-.dashboard .temperature-card .chart, .dashboard .indoor-card .chart { height: 315px; }
+.dashboard .temperature-card .chart, .indoor-page .chart-card .chart { height: 315px; }
 .chart-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding-top: 12px; color: var(--muted); font-size: 13px; }
 .legend { display: flex; gap: 14px; flex-wrap: wrap; }
 .legend > span { display: inline-flex; align-items: center; gap: 6px; }
 .key { width: 19px; border-top: 3px solid var(--temp); border-radius: 2px; }
 .dwd-key { border-color: var(--dwd); border-top-style: dashed; }
 .indoor-card { margin-top: 16px; scroll-margin-top: 16px; }
+.indoor-controls { align-items: end; gap: 9px 14px; margin-bottom: 16px; }
+.humidity-key { border-color: var(--wind); }
+.dew-key { border-color: var(--dusk); border-top-style: dashed; }
 .device-list { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 14px; color: var(--muted); font-size: 14px; }
 .device-button { min-height: 38px; display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 9px; background: var(--panel); cursor: pointer; font-weight: 700; font-size: 14px; }
 .device-button[aria-pressed="true"] { background: var(--selection); border-color: var(--accent); color: var(--text); }
@@ -234,7 +237,7 @@ a.outline-button { text-decoration: none; }
   .rain-metrics > div:first-child { border: 0; padding-left: 0; }
   .rain-metrics dd { font-size: 18px; }
   .section-heading { align-items: start; flex-direction: column; margin-top: 29px; }
-  .dashboard .temperature-card .chart, .dashboard .indoor-card .chart { height: 255px; }
+  .dashboard .temperature-card .chart, .indoor-page .chart-card .chart { height: 255px; }
   .segments button { min-height: 40px; padding-inline: 7px; font-size: 13px; }
   .site-footer { gap: 8px; text-align: left; }
 }

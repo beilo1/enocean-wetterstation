@@ -60,6 +60,11 @@ GOVEE_POLL_MINUTES = int(os.environ.get("GOVEE_POLL_MINUTES", "5"))
 GOVEE_DEVICE_IDS = os.environ.get("GOVEE_DEVICE_IDS", "").strip()
 GOVEE_TEMPERATURE_UNIT = os.environ.get("GOVEE_TEMPERATURE_UNIT", "fahrenheit").strip()
 GOVEE_TEMPERATURE_UNITS = os.environ.get("GOVEE_TEMPERATURE_UNITS", "").strip()
+GOVEE_HOUSE_EXCLUDE_DEVICE_IDS = frozenset(
+    entry.strip().casefold()
+    for entry in os.environ.get("GOVEE_HOUSE_EXCLUDE_DEVICE_IDS", "").split(",")
+    if entry.strip()
+)
 
 # --- Kurzfristprognose & Regenstatus ---
 FORECAST_ENABLED = HAS_SITE_COORDINATES and (

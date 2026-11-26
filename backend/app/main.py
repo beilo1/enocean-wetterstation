@@ -7,6 +7,7 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
@@ -47,7 +48,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title="Wetterstation",
     description="Außenmessungen der Dachstation, DWD-Vergleich, Govee-Raumklima und Wetterprognose.",
-    version="2.0.3",
+    version="2.1.0",
     lifespan=lifespan,
     # Eingebautes Swagger deaktivieren – wir liefern eine eigene Seite,
     # die ins App-Layout integriert ist (siehe /api-docs unten).
@@ -255,6 +256,13 @@ async def api_health(sensor: str | None = None, details: bool = True):
     }, headers=_NO_STORE)
 
 
+def _in_house(device_id: str, name: str | None) -> bool:
+    return (
+        "garage" not in (name or "").casefold()
+        and device_id.casefold() not in config.GOVEE_HOUSE_EXCLUDE_DEVICE_IDS
+    )
+
+
 @app.get("/api/indoor/devices", summary="Liste der erkannten Govee-Sensoren", tags=["Daten"])
 async def api_indoor_devices():
     """
@@ -283,6 +291,7 @@ async def api_indoor_devices():
             {
                 "device_id": r["device_id"],
                 "name": r["device_name"],
+                "in_house": _in_house(r["device_id"], r["device_name"]),
                 "last_seen": int(r["last_seen"].timestamp() * 1000) if r["last_seen"] else None,
                 "samples": r["n"],
                 "temperature_samples": r["temperature_samples"],
@@ -296,19 +305,43 @@ async def api_indoor_devices():
 
 
 @app.get("/api/indoor", summary="Innen-Sensordaten (Govee)", tags=["Daten"])
-async def api_indoor(range: str = Query("24h"), start: str | None = None, end: str | None = None):
-    """Innen-Sensordaten (Govee), passend zur Auflösung der Hauptansicht aggregiert."""
+async def api_indoor(
+    range: str = Query("24h"),
+    start: str | None = None,
+    end: str | None = None,
+    resolution: Literal["auto", "5m", "1h", "1d"] = "auto",
+):
+    """Intervallmittel für Temperatur, relative Luftfeuchte und Taupunkt je Gerät.
+
+    Der Taupunkt wird aus simultanen Temperatur- und Feuchtewerten berechnet
+    und anschließend gemittelt. Ohne vollständiges Wertepaar bleibt er leer.
+    Explizit sind 5 Minuten bis 7 Tage und 1 Stunde bis 45 Tage verfügbar.
+    """
     period = _period(range, start, end)
     where, params = period.where("time")
-    bucket_sql = periods.bucket_expression(period.seconds)
+    if (resolution == "5m" and period.days > 7) or (resolution == "1h" and period.days > 45):
+        raise HTTPException(status_code=422, detail="Für diesen Zeitraum eine gröbere Auflösung wählen.")
+    seconds = {"5m": periods.FIVE_MINUTES, "1h": periods.HOUR, "1d": periods.DAY}.get(resolution, period.seconds)
+    bucket_sql = periods.bucket_expression(seconds)
+    a, b = analytics.MAGNUS_A, analytics.MAGNUS_B
 
     sql = f"""
+        WITH samples AS (
+            SELECT time, device_id, device_name, temperature_c, humidity_pct,
+                   CASE
+                       WHEN humidity_pct > 0 AND humidity_pct <= 100
+                        AND temperature_c > -{b} AND temperature_c < 'Infinity'::double precision
+                       THEN {a} * temperature_c / ({b} + temperature_c) + ln(humidity_pct / 100.0)
+                   END AS gamma
+            FROM indoor_readings WHERE {where}
+        )
         SELECT (extract(epoch FROM {bucket_sql})*1000)::bigint AS t,
                device_id,
                max(device_name) AS device_name,
                avg(temperature_c) AS temp,
-               avg(humidity_pct) AS hum
-        FROM indoor_readings WHERE {where}
+               avg(humidity_pct) AS hum,
+               avg({b} * gamma / ({a} - gamma)) AS dew
+        FROM samples
         GROUP BY 1, device_id
         ORDER BY device_id, 1
     """
@@ -322,13 +355,19 @@ async def api_indoor(range: str = Query("24h"), start: str | None = None, end: s
         ser = series.setdefault(dev, {
             "device_id": dev,
             "name": r["device_name"] or dev,
-            "t": [], "temperature_c": [], "humidity_pct": [],
+            "t": [], "temperature_c": [], "humidity_pct": [], "dew_point_c": [],
         })
+        if r["device_name"]:
+            ser["name"] = r["device_name"]
         ser["t"].append(r["t"])
         ser["temperature_c"].append(queries.rounded(r["temp"]))
         ser["humidity_pct"].append(queries.rounded(r["hum"], 1))
+        ser["dew_point_c"].append(queries.rounded(r["dew"]))
 
-    return JSONResponse({"devices": list(series.values()), "bucket_seconds": period.seconds},
+    for ser in series.values():
+        ser["in_house"] = _in_house(ser["device_id"], ser["name"])
+
+    return JSONResponse({"devices": list(series.values()), "bucket_seconds": seconds},
                         headers=_NO_STORE)
 
 
@@ -409,6 +448,11 @@ _frontend = config.FRONTEND_DIR
 @app.get("/", include_in_schema=False)
 async def index():
     return FileResponse(_frontend / "index.html")
+
+
+@app.get("/raumklima", include_in_schema=False)
+async def indoor_page():
+    return FileResponse(_frontend / "indoor.html")
 
 
 @app.get("/heatmap", include_in_schema=False)

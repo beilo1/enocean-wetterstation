@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6f0">
+  <title>Wetterstation • Raumklima</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css?v=2.1.0">
+  <script src="/js/site.js?v=2.1.0" defer></script>
+  <script src="/vendor/echarts.min.js" defer></script>
+  <script src="/js/series.js?v=2.1.0" defer></script>
+  <script src="/js/charts.js?v=2.1.0" defer></script>
+  <script src="/js/indoor.js?v=2.1.0" defer></script>
+</head>
+<body class="dashboard subpage indoor-page">
+  <a class="skip-link" href="#content">Zum Inhalt</a>
+  <header class="app-header">
+    <div class="shell masthead">
+      <a class="wordmark" href="/" aria-label="Dachstation, Übersicht">
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M5 20 16 10l11 10M10 18v8h12v-8M16 4v2M25 8l-2 2M7 8l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        Dachstation
+      </a>
+      <nav class="main-nav" aria-label="Hauptnavigation">
+        <a href="/">Übersicht</a>
+        <a href="/raumklima" class="current" aria-current="page">Raumklima</a>
+        <a href="/heatmap">Kalender</a>
+        <a href="/docs-app">Dokumentation</a>
+        <a href="/api-docs">API</a>
+        <a href="/maintenance">Wartung</a>
+      </nav>
+      <button class="icon-button" id="themeBtn" type="button" aria-label="Farbschema wechseln" title="Farbschema wechseln">☾</button>
+    </div>
+  </header>
+
+  <main class="shell" id="content">
+    <div class="page-heading">
+      <div><h1>Raumklima</h1><p>Temperatur, relative Luftfeuchte und Taupunkt deiner Govee-Sensoren.</p></div>
+    </div>
+    <div class="section-actions indoor-controls">
+        <div class="segments" id="rangePicker" role="group" aria-label="Zeitraum">
+          <button type="button" data-range="24h" aria-pressed="true">24 Std.</button>
+          <button type="button" data-range="7d" aria-pressed="false">7 Tage</button>
+          <button type="button" data-range="30d" aria-pressed="false">30 Tage</button>
+          <button type="button" data-range="365d" aria-pressed="false">12 Monate</button>
+          <button type="button" data-range="custom" aria-pressed="false">Eigener</button>
+        </div>
+      <label class="control-label">Auflösung
+        <select class="field" id="indoorResolution">
+          <option value="auto">Automatisch</option>
+          <option value="5m">5 Minuten</option>
+          <option value="1h">1 Stunde</option>
+          <option value="1d">1 Tag</option>
+        </select>
+      </label>
+      <label class="control-label">Y-Skalierung
+        <select class="field" id="indoorScale">
+          <option value="auto">Automatisch</option>
+          <option value="zero">Mit Nullpunkt</option>
+        </select>
+      </label>
+    </div>
+    <form class="custom-range" id="customRange" hidden>
+      <label>Von <input type="date" name="start" required></label>
+      <label>Bis <input type="date" name="end" required></label>
+      <button class="outline-button" type="submit">Anzeigen</button>
+      <span id="rangeError" role="status"></span>
+    </form>
+    <p class="chart-status" id="trendStatus" role="status">Govee-Messungen werden geladen …</p>
+
+
+    <section class="card chart-card" aria-labelledby="houseTitle">
+      <div class="card-heading"><div><h2 id="houseTitle">Innentemperaturen im Haus</h2><p>Temperaturverlauf im Raumvergleich</p></div><span class="heading-icon indoor-icon" aria-hidden="true"><svg class="ui-icon"><use href="/icons.svg#home"></use></svg></span></div>
+      <div id="houseDevices" class="device-list" role="group" aria-label="Temperaturkurven ein- und ausblenden"></div>
+      <p class="point-count" id="chartIndoorCount" hidden></p>
+      <div class="chart" id="chartIndoor" role="img" aria-label="Temperaturverlauf der Govee-Sensoren im Haus"></div>
+    </section>
+
+    <section class="card chart-card indoor-card" aria-labelledby="roomTitle">
+      <div class="card-heading"><div><h2 id="roomTitle">Raumverlauf</h2><p id="roomCaption" aria-live="polite">Wähle einen Govee-Sensor.</p></div></div>
+      <div id="roomDevices" class="device-list" role="group" aria-label="Raum oder Govee-Sensor wählen"></div>
+      <div class="chart-meta">
+        <div class="legend" aria-label="Messgrößen">
+          <span><i class="key" aria-hidden="true"></i>Temperatur (°C)</span>
+          <span><i class="key humidity-key" aria-hidden="true"></i>Relative Luftfeuchte (%)</span>
+          <span><i class="key dew-key" aria-hidden="true"></i>Taupunkt (°C)</span>
+        </div>
+      </div>
+      <p class="point-count" id="chartRoomCount" hidden></p>
+      <div class="chart" id="chartRoom" role="img" aria-label="Temperatur, relative Luftfeuchte und Taupunkt"></div>
+      <div class="comfort-strip" id="comfortStrip" hidden>
+        <div><strong id="comfortDevice"></strong><span id="comfortHint"></span></div>
+        <dl><div><dt>Feuchte</dt><dd id="comfortHum">–</dd></div><div><dt>Taupunkt</dt><dd id="comfortDew">–</dd></div><div id="comfortFeelsWrap" hidden><dt>Gefühlt</dt><dd id="comfortFeels">–</dd></div></dl>
+      </div>
+    </section>
+  </main>
+  <footer class="shell site-footer"><span>Dachstation · Eltako WMS und Raspberry Pi</span></footer>
+</body>
+</html>

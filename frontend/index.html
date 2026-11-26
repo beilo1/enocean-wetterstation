@@ -6,11 +6,12 @@
   <meta name="theme-color" content="#f7f6f0">
   <title>Wetterstation • Übersicht</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/styles.css?v=2.0.3">
-  <script src="/js/site.js?v=2.0.3" defer></script>
+  <link rel="stylesheet" href="/css/styles.css?v=2.1.0">
+  <script src="/js/site.js?v=2.1.0" defer></script>
   <script src="/vendor/echarts.min.js" defer></script>
-  <script src="/js/charts.js?v=2.0.3" defer></script>
-  <script src="/js/app.js?v=2.0.3" defer></script>
+  <script src="/js/series.js?v=2.1.0" defer></script>
+  <script src="/js/charts.js?v=2.1.0" defer></script>
+  <script src="/js/app.js?v=2.1.0" defer></script>
 </head>
 <body class="dashboard">
   <a class="skip-link" href="#content">Zum Inhalt</a>
@@ -22,7 +23,7 @@
       </a>
       <nav class="main-nav" aria-label="Hauptnavigation">
         <a href="/" class="current" aria-current="page">Übersicht</a>
-        <a href="/#innen">Raumklima</a>
+        <a href="/raumklima">Raumklima</a>
         <a href="/heatmap">Kalender</a>
         <a href="/docs-app">Dokumentation</a>
         <a href="/api-docs">API</a>
@@ -85,9 +86,9 @@
     </section>
 
     <div class="section-heading trends-heading" id="verlauf">
-      <div><h2>Messverläufe</h2><p>Zeitraum für Außen- und Innenmessungen</p></div>
+      <div><h2>Messverläufe</h2><p>Zeitraum für Außenmessungen</p></div>
       <div class="section-actions">
-        <div class="segments" id="rangePicker" aria-label="Zeitraum">
+        <div class="segments" id="rangePicker" role="group" aria-label="Zeitraum">
           <button type="button" data-range="24h" aria-pressed="true">24 Std.</button>
           <button type="button" data-range="7d" aria-pressed="false">7 Tage</button>
           <button type="button" data-range="30d" aria-pressed="false">30 Tage</button>
@@ -113,17 +114,6 @@
       <div class="chart-meta"><div class="legend"><span><i class="key local-key"></i>Dachstation</span><span id="dwdLegend" hidden><i class="key dwd-key"></i><span id="dwdName">DWD</span></span></div><span id="tempStats"></span></div>
       <p class="point-count" id="chartTempCount" hidden></p>
       <div class="chart" id="chartTemp" role="img" aria-label="Außentemperatur der Dachstation und der DWD-Vergleichsstation"></div>
-    </section>
-
-    <section class="card chart-card indoor-card" id="innen" aria-labelledby="inTitle">
-      <div class="card-heading"><div><h3 id="inTitle">Raumklima</h3><p>Temperaturverlauf deiner Govee-Sensoren</p></div><span class="heading-icon indoor-icon" data-icon="home" aria-hidden="true"></span></div>
-      <div id="indoorDevices" class="device-list" role="group" aria-label="Sensoren im Diagramm anzeigen"></div>
-      <p class="point-count" id="chartIndoorCount" hidden></p>
-      <div class="chart" id="chartIndoor" role="img" aria-label="Innentemperatur nach Govee-Sensor"></div>
-      <div class="comfort-strip" id="comfortStrip" hidden>
-        <div><strong id="comfortDevice"></strong><span id="comfortHint"></span></div>
-        <dl><div><dt>Feuchte</dt><dd id="comfortHum">–</dd></div><div><dt>Taupunkt</dt><dd id="comfortDew">–</dd></div><div id="comfortFeelsWrap" hidden><dt>Gefühlt</dt><dd id="comfortFeels">–</dd></div></dl>
-      </div>
     </section>
 
     <section class="other-charts" aria-label="Weitere Außenmessungen">

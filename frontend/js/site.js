@@ -24,20 +24,11 @@ themeSwitch.addEventListener("click", () => {
   document.dispatchEvent(new Event("theme-changed"));
 });
 
-if (document.getElementById("innen")) {
-  function showCurrentPage() {
-    const indoor = location.hash === "#innen";
-    document.title = "Wetterstation • " + (indoor ? "Raumklima" : "Übersicht");
-    for (const link of document.querySelectorAll('.main-nav a[href="/"], .main-nav a[href="/#innen"]')) {
-      const active = (link.hash === "#innen") === indoor;
-      link.classList.toggle("current", active);
-      if (active) link.setAttribute("aria-current", indoor ? "location" : "page");
-      else link.removeAttribute("aria-current");
-    }
-  }
-  showCurrentPage();
-  window.addEventListener("hashchange", showCurrentPage);
+function redirectIndoorBookmark() {
+  if (location.pathname === "/" && location.hash === "#innen") location.replace("/raumklima");
 }
+redirectIndoorBookmark();
+window.addEventListener("hashchange", redirectIndoorBookmark);
 
 function mountProjectFooter(footer) {
   const repository = "beilo1/enocean-wetterstation";

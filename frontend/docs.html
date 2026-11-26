@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Wetterstation • Dokumentation</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/styles.css?v=2.0.3">
+  <link rel="stylesheet" href="/css/styles.css?v=2.1.0">
   <meta name="theme-color" content="#f7f6f0">
-  <script src="/js/site.js?v=2.0.3" defer></script>
+  <script src="/js/site.js?v=2.1.0" defer></script>
 </head>
 <body class="dashboard">
   <a class="skip-link" href="#content">Zum Inhalt</a>
@@ -19,7 +19,7 @@
       </a>
       <nav class="main-nav" aria-label="Hauptnavigation">
         <a href="/">Übersicht</a>
-        <a href="/#innen">Raumklima</a>
+        <a href="/raumklima">Raumklima</a>
         <a href="/heatmap">Kalender</a>
         <a href="/docs-app" class="current" aria-current="page">Dokumentation</a>
         <a href="/api-docs">API</a>
@@ -114,7 +114,9 @@ Teil 2
       </section>
       <section class="card content-card" id="raumklima"><h2>Raumklima</h2>
       <p>Die Innenkurve hat eine eigene Temperaturskala. Die Geräteschalter gelten für das Diagramm und werden in diesem Browser gespeichert. Neben jedem Sensor steht die Anzahl der Temperaturpunkte für die gewählte Auflösung. Einzelne oder durch Lücken getrennte Messungen erscheinen als Punkte. Geräte mit ausschließlich Feuchtemessungen werden entsprechend gekennzeichnet. Neue Geräte haben erst ab dem ersten erfolgreichen Abfragezyklus eine Historie.</p>
-      <p>Die Govee-Temperatur wird vor dem Speichern in °C normalisiert. Die Standard-Eingangseinheit ist Fahrenheit. Geräte mit abweichender API-Einheit lassen sich in der Konfiguration festlegen. Die Raumklima-Zusammenfassung verwendet die jüngste vollständige Temperatur- und Feuchtemessung. Der Taupunkt wird mit der Magnus-Formel berechnet. Der Hitzeindex wird ab 26 °C berechnet und eingeblendet, wenn er um mindestens 0,5 °C von der gemessenen Temperatur abweicht.</p>
+      <p><a href="/raumklima">Raumklima</a> zeigt die Innentemperaturen der Hausräume und ein Detaildiagramm für den ausgewählten Govee-Sensor. Geräte mit „Garage“ im Namen stehen in der Detailauswahl zur Verfügung. Weitere Geräte lassen sich per <code>GOVEE_HOUSE_EXCLUDE_DEVICE_IDS</code> aus dem Hausvergleich nehmen. Zeitraum, Auflösung und Y-Skalierung gelten für beide Diagramme.</p>
+      <p>Das Backend normalisiert die Temperatur in °C und speichert sie zusammen mit der relativen Luftfeuchte in Prozent. Die Standard-Eingangseinheit ist Fahrenheit. Geräte mit abweichender API-Einheit lassen sich in der Konfiguration festlegen. Den Taupunkt berechnet das Backend per Magnus-Formel aus Temperatur und Feuchte derselben Messung und mittelt ihn je Intervall. Bei fehlenden Wertepaaren bleibt die Kurve lückenhaft.</p>
+      <p>Die aktuelle Komfortanzeige verwendet die jüngste vollständige Messung des ausgewählten Sensors. Der Hitzeindex wird ab 26 °C berechnet und eingeblendet, wenn er um mindestens 0,5 °C von der gemessenen Temperatur abweicht.</p>
       </section>
       <section class="card content-card" id="prognose"><h2>Prognose</h2>
       <p>Standardmäßig werden zwölf künftige Stunden dargestellt. Der Server aktualisiert sie alle 30 Minuten. Nach einem fehlgeschlagenen Abruf bleiben passende zukünftige Stunden des letzten erfolgreichen Abrufs bis zu sechs Stunden verfügbar. Die Oberfläche zeigt den Stand des Abrufs. Die Niederschlagswahrscheinlichkeit und die im Tooltip verfügbare Menge beziehen sich auf die Stunde bis zur angegebenen Uhrzeit.</p>
@@ -125,7 +127,7 @@ Teil 2
       <ul>
         <li><code>/healthz</code> prüft die Datenbankverbindung. <code>/api/health</code> meldet den Zustand der Dachstation.</li>
         <li><code>/api/series</code>, <code>/api/latest</code>, <code>/api/sun</code>, <code>/api/dwd</code>, <code>/api/rain</code> und <code>/api/forecast</code> speisen die Übersicht.</li>
-        <li><code>/api/indoor</code> liefert Govee-Zeitreihen je Gerät. <code>/api/indoor/devices</code> listet Geräte mit gespeicherten Messungen.</li>
+        <li><code>/api/indoor</code> liefert Temperatur, relative Luftfeuchte und Taupunkt je Gerät. Die Auflösung ist über <code>resolution</code> wählbar. <code>/api/indoor/devices</code> listet Geräte mit gespeicherten Messungen.</li>
         <li>Weitere Endpunkte für CSV, Kalender und Raumklima stehen in der <a href="/api-docs">API-Referenz</a>.</li>
       </ul>
       <p>Für Datensicherung und Pflege siehe <a href="/maintenance">Wartung</a>.</p>

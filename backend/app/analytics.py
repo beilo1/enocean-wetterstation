@@ -70,9 +70,12 @@ async def calendar_stats(sensor_id: str, year: int) -> dict:
     }
 
 
+MAGNUS_A, MAGNUS_B = 17.62, 243.12
+
+
 def _dew_point(t_c: float, rh: float) -> float:
     """Taupunkt nach Magnus-Formel."""
-    a, b = 17.62, 243.12
+    a, b = MAGNUS_A, MAGNUS_B
     gamma = (a * t_c) / (b + t_c) + math.log(max(1e-3, rh / 100.0))
     return (b * gamma) / (a - gamma)
 

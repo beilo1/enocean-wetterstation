@@ -10,7 +10,15 @@ EnOcean Wetterstation ist ein selbst gehostetes Wetter-Dashboard für den Raspbe
 - **Wetterprognose** von Open-Meteo am konfigurierten Standort. Standardmäßig werden zwölf Stunden mit Wetterzustand, Temperatur und Niederschlagswahrscheinlichkeit angezeigt.
 - **Automatische Aktualisierung** der Übersichtsseite. Aktuelle Messwerte und der 24-Stunden-Verlauf werden alle 60 Sekunden neu geladen. Empfangsstatus und Prognose haben eigene Intervalle.
 - **Jahreskalender als Heatmap** für Temperatur, Wind, Helligkeit und Regentage mit Tagesdetails, Extremwerten und Kennzahlen wie Frost- und Hitzetagen.
-- **Govee-Raumklima** für Thermometer, Hygrometer und smarte Thermostate, die ihre gemessene Temperatur oder Luftfeuchte über die Govee-API bereitstellen. Die Integration liest Messwerte aus. Je nach Gerät und Datenlage zeigt das Dashboard Temperaturverlauf, Feuchte, Taupunkt und Hitzeindex.
+- **Govee-Raumklima** auf einer eigenen Seite mit einem Temperaturvergleich der Hausräume und einer umschaltbaren Zeitreihe pro Thermometer, Hygrometer oder smartem Thermostat. Die Detailansicht zeigt Temperatur, relative Luftfeuchte und Taupunkt.
+
+## Raumklima mit Govee
+
+Über **Raumklima** in der Hauptnavigation öffnest du `/raumklima`. Oben blendest du die Temperaturkurven der Hausräume einzeln ein oder aus. Geräte mit „Garage“ im Namen erscheinen nur in der Detailauswahl. Über `GOVEE_HOUSE_EXCLUDE_DEVICE_IDS` lassen sich weitere Geräte anhand ihrer ID aus dem Hausvergleich ausblenden.
+
+Die Raum-Buttons wechseln das gemeinsame Detaildiagramm. Temperatur und Taupunkt stehen in °C auf der linken Achse, relative Luftfeuchte in Prozent auf der rechten. Für beide Diagramme kannst du 24 Stunden, 7 Tage, 30 Tage, 12 Monate oder eigene Daten auswählen und Auflösung sowie Y-Skalierung einstellen. Die automatische Auflösung folgt der Wetterübersicht. Manuell sind 5 Minuten bis 7 Tage, 1 Stunde bis 45 Tage und 1 Tag für jeden Zeitraum verfügbar.
+
+Das Backend speichert die über die Govee-API abrufbaren Messwerte standardmäßig alle fünf Minuten in PostgreSQL. Es ermittelt den Taupunkt per Magnus-Formel aus Temperatur und relativer Luftfeuchte derselben Messung. Erst danach mittelt es die Werte je Zeitintervall. Das funktioniert auch für vorhandene Messdaten. Fehlende Werte bleiben als Lücken erhalten. `GET /api/indoor` liefert die Zeitreihen in `temperature_c`, `humidity_pct` und `dew_point_c`. Die aktuelle Komfortanzeige ergänzt bei Wärme und ausreichender Abweichung den Hitzeindex.
 
 ## Screenshots
 
@@ -53,7 +61,7 @@ flowchart TD
     forecast["Open-Meteo"] -->|Prognose| backend
     backend -->|Innenmessungen, DWD und Aggregate| postgres
     postgres -->|Rohdaten und Zeitreihen| backend
-    backend -->|HTML und JSON| web["Dashboard und Kalender"]
+    backend -->|HTML und JSON| web["Übersicht, Raumklima und Kalender"]
 ```
 
 FastAPI liest aus PostgreSQL und bildet Stunden- und Tagesaggregate für längere Zeiträume. Der Browser ruft alle Daten beim Backend ab. Open-Meteo-Prognosen liegen in einem gemeinsamen Zwischenspeicher im Backend.

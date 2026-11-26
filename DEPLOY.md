@@ -112,6 +112,7 @@ sudoedit /opt/wetter-station/.env
 | `DWD_ENABLED`, `DWD_STATION_ID` | `1` aktiviert die DWD-Vergleichsdaten bei gesetzten Koordinaten oder expliziter Stations-ID. Führende Nullen einer echten Stations-ID beibehalten. Mit `0` bleibt der Abruf aus. |
 | `GOVEE_API_KEY`, `GOVEE_DEVICE_IDS` | Für Innenmessungen den eigenen Govee-API-Schlüssel eintragen. Eine leere Geräteliste aktiviert die automatische Suche nach geeigneten Geräten. Alternativ kommagetrennte `device\|sku`-Paare angeben. Ein leerer Schlüssel lässt die Integration aus. |
 | `GOVEE_TEMPERATURE_UNIT`, `GOVEE_TEMPERATURE_UNITS` | Eingangs-Standard in der Vorlage ist `fahrenheit`. Explizite Einheiten aus der API werden erkannt. Gerätebezogene Ausnahmen als kommagetrennte `device\|celsius`- oder `device\|fahrenheit`-Paare setzen. |
+| `GOVEE_HOUSE_EXCLUDE_DEVICE_IDS` | Optional. Kommagetrennte Geräte-IDs, die nur aus dem Temperaturvergleich im Haus ausgeblendet werden. Geräte mit „Garage“ im Namen werden automatisch ausgeblendet. Alle bleiben in der Detailansicht verfügbar. |
 
 Govee-Historie entsteht ab der ersten erfolgreichen Messung. Für die optionale SQLite-Migration ist jetzt der passende Zeitpunkt. [SQLite-Import](#optionale-sqlite-migration)
 
@@ -143,6 +144,7 @@ sudo journalctl -u wetter-backend -u wetter-ingestor -n 80 --no-pager
 - `/healthz` liefert bei erreichbarer Datenbank `{"status":"ok"}`.
 - `/api/latest` enthält nach dem Empfang beider Wettertelegramme eine Messung. Bleibt `latest` leer, prüfe Port, Baudrate, Sender-ID und Zugriffsrechte im Journal. Beende ein noch laufendes Diagnoseskript vor dem Start des Ingestors.
 - Die erste Prognose und Govee-Messung können etwas später eintreffen. Der Jahreskalender zeigt Daten nach dem ersten Aufbau der Tagesaggregate.
+- Öffne **Raumklima** über die Hauptnavigation. Prüfe den Hausvergleich sowie die Temperatur-, Feuchte- und Taupunktkurven eines Sensors. In `GET /api/indoor/devices` zeigen `humidity_samples` und `in_house` an, ob Feuchtewerte vorliegen und ob der Sensor zum Hausvergleich gehört.
 - Falls keine Diagramme erscheinen, prüfe, ob `frontend/vendor/echarts.min.js` nach Schritt 3 existiert.
 
 ## Bestehende Installation aktualisieren
@@ -190,7 +192,7 @@ curl -fsS http://127.0.0.1:8000/openapi.json | python3 -c 'import json, sys; pri
 curl -fsS http://127.0.0.1:8000/license | head -n 3
 ```
 
-Für diese Fassung zeigt die Versionsabfrage `2.0.3`. Unter **Dokumentation → EnOcean-Datagramme** findest du die Beispielrahmen und die Feldtabelle. Über die Fußzeile öffnest du den Dialog mit GitHub-Link, QR-Code und lokalem Lizenztext.
+Für diese Fassung zeigt die Versionsabfrage `2.1.0`. Bestehende Govee-Messreihen sind sofort unter **Raumklima** verfügbar. Für das Update von 2.0.3 genügt der Austausch des Codes. Abhängigkeiten, Dienstdateien und Datenbankschema sind identisch. Die produktive `.env` kann unverändert weiterverwendet werden.
 
 Prüfe anschließend die [Funktionen](#funktion-prüfen). Bei älteren Govee-Daten mit bestätigter falscher Temperatureinheit zeigt `venv/bin/python scripts/fix_govee_fahrenheit.py --help`, wie du für eine konkrete Geräte-ID und einen bestätigten Zeitraum eine Vorschau erstellst. Prüfe die Vorschau und sichere die Datenbank, bevor du `--apply` einsetzt.
 

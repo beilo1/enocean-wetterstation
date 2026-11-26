@@ -1,6 +1,5 @@
 "use strict";
 
-const $ = (id) => document.getElementById(id);
 const ICONS = {
   left: '<path d="m15 5-7 7 7 7"/>',
   right: '<path d="m9 5 7 7-7 7"/>',
@@ -16,43 +15,14 @@ const ICONS = {
   sunrise: '<path d="M2 19h20M5 22h14m-12-6a5 5 0 0 1 10 0m-5-9V3m-2 2 2-2 2 2M4 11l1 1m14 0 1-1"/>',
   drop: '<path d="M12 2.5S5.5 10 5.5 15.1a6.5 6.5 0 1 0 13 0C18.5 10 12 2.5 12 2.5Z"/><path d="M9 15a3 3 0 0 0 3 3"/>',
   thermometer: '<path d="M10 14.5V5a2 2 0 1 1 4 0v9.5a4 4 0 1 1-4 0Z"/><path d="M12 11v7m4-11h2m-2 4h2"/>',
-  home: '<path d="m3 11 9-8 9 8m-3-2v11H6V9m4 11v-6h4v6"/>',
   download: '<path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/>',
 };
 const paintIcon = (el, name) => {
   el.dataset.icon = name;
   el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || ICONS.cloud) + '</svg>';
 };
-const numberFormats = [0, 1, 2].map(digits =>
-  new Intl.NumberFormat("de-DE", { minimumFractionDigits: digits, maximumFractionDigits: digits }));
-const fmt = (value, digits = 1, unit = "") => Number.isFinite(value)
-  ? numberFormats[digits].format(value) + unit : "–";
-const clock = (value) => new Date(value).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-const timestamp = (value) => new Date(value).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
 const isToday = (value) => new Date(value).toDateString() === new Date().toDateString();
-const readStored = (key) => { try { return localStorage.getItem(key); } catch { return null; } };
-const writeStored = (key, value) => { try { localStorage.setItem(key, value); } catch {} };
 const state = { range: "24h", start: "", end: "", series: null, request: null };
-let excluded = new Set();
-try {
-  const saved = JSON.parse(readStored("wetter-hidden-indoor-devices"));
-  if (Array.isArray(saved)) excluded = new Set(saved);
-} catch {}
-
-async function json(path, signal) {
-  const response = await fetch(path, { cache: "no-store", signal });
-  if (!response.ok) throw new Error("HTTP " + response.status);
-  return response.json();
-}
-
-function periodParams() {
-  const p = new URLSearchParams({ range: state.range });
-  if (state.range === "custom") {
-    p.set("start", state.start);
-    p.set("end", state.end);
-  }
-  return p;
-}
 
 function setPetal(id, value, angle) {
   const path = $(id);
@@ -208,61 +178,30 @@ async function loadForecast() {
   }
 }
 
-async function loadComfort() {
-  try {
-    const data = await json("/api/analysis/comfort");
-    $("comfortStrip").hidden = !data.ok || data.age_seconds > 1800;
-    if ($("comfortStrip").hidden) return;
-    $("comfortDevice").textContent = (data.device || "Innen") + " · " + fmt(data.temperature_c, 1, " °C");
-    $("comfortHint").textContent = data.hint || "";
-    $("comfortHum").textContent = fmt(data.humidity_pct, 0, " %");
-    $("comfortDew").textContent = fmt(data.dew_point_c, 1, " °C");
-    $("comfortFeelsWrap").hidden = Math.abs(data.feels_like_c - data.temperature_c) < 0.5;
-    $("comfortFeels").textContent = fmt(data.feels_like_c, 1, " °C");
-  } catch { $("comfortStrip").hidden = true; }
-}
-
 async function loadTrends() {
   state.request?.abort();
   const controller = new AbortController();
   state.request = controller;
-  const params = periodParams();
-  const settled = await Promise.allSettled(["series", "sun", "dwd", "indoor"].map(path => json("/api/" + path + "?" + params, controller.signal)));
+  const params = periodParams(state);
+  const timeFormat = state.range === "24h" ? clock : undefined;
+  const settled = await Promise.allSettled(["series", "sun", "dwd"].map(path => json("/api/" + path + "?" + params, controller.signal)));
   if (controller.signal.aborted) return;
-  const [out, sun, dwd, inside] = settled.map(r => r.status === "fulfilled" ? r.value : null);
+  const [out, sun, dwd] = settled.map(r => r.status === "fulfilled" ? r.value : null);
   const warnings = [];
   if (!out) warnings.push("Außenmessungen");
   if (!dwd) warnings.push("DWD-Vergleich");
-  if (!inside) warnings.push("Innenmessungen");
   const status = $("trendStatus");
   status.hidden = !warnings.length && !!window.echarts;
   status.textContent = window.echarts ? "Derzeit nicht abrufbar: " + warnings.join(", ") + "." : "Diagramme konnten nicht geladen werden.";
-  state.series = { out, sun, dwd, inside };
+  state.series = { out, sun, dwd, timeFormat };
   drawTrends(state.series);
 }
 
-const buttons = [...$("rangePicker").querySelectorAll("button")];
-function selectRange(range) {
-  for (const button of buttons) button.setAttribute("aria-pressed", button.dataset.range === range);
-  $("customRange").hidden = range !== "custom";
-}
-for (const button of buttons) button.addEventListener("click", () => {
-  const range = button.dataset.range;
-  selectRange(range);
-  if (range === "custom") return;
-  Object.assign(state, { range, start: "", end: "" });
-  $("rangeError").textContent = "";
+bindPeriodControls(period => {
+  Object.assign(state, period);
   loadTrends();
 });
-$("customRange").addEventListener("submit", (event) => {
-  event.preventDefault();
-  const start = event.currentTarget.elements.start.value, end = event.currentTarget.elements.end.value;
-  if (end < start) { $("rangeError").textContent = "Das Enddatum muss ab dem Startdatum liegen."; return; }
-  $("rangeError").textContent = "";
-  Object.assign(state, { range: "custom", start, end });
-  loadTrends();
-});
-$("csvBtn").addEventListener("click", () => { location.href = "/api/export.csv?" + periodParams(); });
+$("csvBtn").addEventListener("click", () => { location.href = "/api/export.csv?" + periodParams(state); });
 document.querySelectorAll("[data-icon]").forEach(el => paintIcon(el, el.dataset.icon));
 document.addEventListener("theme-changed", () => { if (state.series) drawTrends(state.series); });
 
@@ -270,7 +209,6 @@ function loadLive() {
   $("todayLabel").textContent = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   loadLatest();
   loadRain();
-  loadComfort();
 }
 loadLive();
 loadHealth();
