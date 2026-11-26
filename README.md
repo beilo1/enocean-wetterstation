@@ -67,6 +67,72 @@ FastAPI liest aus PostgreSQL und bildet Stunden- und Tagesaggregate für länger
 | `deploy/` | systemd-Dienste und optionales PostgreSQL-Tuning |
 | `scripts/` | Installation der Diagrammbibliothek, Migration und Wartung |
 
+## EnOcean-Datagramme
+
+Der Eltako WMS liefert seine Messwerte per Leitung an das FWS61. Das FWS61 sendet zwei 4BS-Funktelegramme mit derselben Sender-ID (Eltako-Format für A5-13-01 und A5-13-02). Ein EnOcean-USB-Stick oder eine Fam4Pi-Platine empfängt sie und gibt sie als ESP3-Rahmen über die serielle Schnittstelle an den Raspberry Pi weiter. Der Ingestor öffnet `SERIAL_PORT` mit standardmäßig 57.600 Baud (8 Datenbits, keine Parität, 1 Stoppbit).
+
+### ESP3-Rahmen im Beispiel
+
+Senkrechte Striche markieren die Feldgrenzen. Die Sender-ID `A1 B2 C3 D4` und alle Messwerte sind erfunden.
+
+```text
+Teil 1 · Wetter:     55 | 00 0A 07 01 | EB | A5 40 80 12 1A A1 B2 C3 D4 00 | 01 FF FF FF FF 3C 00 | B9
+Teil 2 · Helligkeit: 55 | 00 0A 07 01 | EB | A5 36 9C 24 28 A1 B2 C3 D4 00 | 01 FF FF FF FF 3C 00 | 2D
+```
+
+| Feld | Hex | Bedeutung |
+| --- | --- | --- |
+| Sync | `55` | Beginn des seriellen ESP3-Rahmens. |
+| Header | `00 0A 07 01` | 10 Byte DATA, 7 Byte OPTIONAL_DATA, Pakettyp 01 (RADIO_ERP1). |
+| Header-CRC | `EB` | CRC-8 über die vier Header-Bytes. |
+| DATA | `A5 · DB3 DB2 DB1 DB0 · A1 B2 C3 D4 · 00` | 4BS-Typ A5, vier Wetterdatenbytes, vier Byte Sender-ID, ein Statusbyte. |
+| OPTIONAL_DATA | `01 FF FF FF FF 3C 00` | Empfangsmetadaten. Im Beispiel Subtelegramm-Zähler 1, Broadcast-Ziel, RSSI −60 dBm, Security Level 0. |
+| Daten-CRC | `B9 / 2D` | CRC-8 über DATA und OPTIONAL_DATA, je nach Telegramm. |
+
+<details>
+<summary>Vollständige Rahmen in Binärdarstellung</summary>
+
+```text
+Teil 1
+01010101 | 00000000 00001010 00000111 00000001 | 11101011 | 10100101 01000000 10000000 00010010 00011010 10100001 10110010 11000011 11010100 00000000 | 00000001 11111111 11111111 11111111 11111111 00111100 00000000 | 10111001
+
+Teil 2
+01010101 | 00000000 00001010 00000111 00000001 | 11101011 | 10100101 00110110 10011100 00100100 00101000 10100001 10110010 11000011 11010100 00000000 | 00000001 11111111 11111111 11111111 11111111 00111100 00000000 | 00101101
+```
+
+</details>
+
+### Datenbytes und Messwerte
+
+```text
+Teil   Hex          Bits (DB3 → DB0)
+1      40 80 12 1A  01000000 10000000 00010010 00011010
+2      36 9C 24 28  00110110 10011100 00100100 00101000
+```
+
+Die Bits sind pro Byte vom höchstwertigen zum niederwertigsten Bit dargestellt (`b7…b0`). `x` ist der vorzeichenlose Dezimalwert des Datenbytes. Im ersten Teil unterscheiden sich `1A` (`00011010`, nass) und `18` (`00011000`, trocken) in Bit `b1`. Der Ingestor vergleicht das vollständige `DB0`. `28` (`00101000`) kennzeichnet den zweiten Teil.
+
+| Position | Messgröße | Hex | Dezimal | Feld in `readings` | Umrechnung | Beispielwert |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 · DB3 | Dämmerungshelligkeit | `40` | 64 | `twilight_lux` | x × 1000 / 255 | 250,98 lx |
+| 1 · DB2 | Außentemperatur | `80` | 128 | `temperature_c` | x × 120 / 255 − 40 | 20,24 °C |
+| 1 · DB1 | Windgeschwindigkeit | `12` | 18 | `wind_ms` | x × 70 / 255 | 4,94 m/s |
+| 1 · DB0 | Regen und Kennung | `1A` | 26 | `rain` | 1A → true · 18 → false | Regen (nass) |
+| 2 · DB3 | Helligkeit West | `36` | 54 | `west_klux` | x × 150 / 255 | 31,76 kLux |
+| 2 · DB2 | Helligkeit Süd | `9C` | 156 | `south_klux` | x × 150 / 255 | 91,76 kLux |
+| 2 · DB1 | Helligkeit Ost | `24` | 36 | `east_klux` | x × 150 / 255 | 21,18 kLux |
+| 2 · DB0 | Kennung für Teil 2 | `28` | 40 | – | 28 → Helligkeitsteil | Teil 2 |
+
+### Empfang, Filterung und Speicherung
+
+1. Der ESP3-Reader sucht `55`, liest Längen und Pakettyp aus dem Header und trennt `DATA` von `OPTIONAL_DATA`. Er liest beide CRC-Bytes mit und überspringt sie bei der Auswertung.
+2. Der Ingestor akzeptiert `RADIO_ERP1` (`01`) mit mindestens zehn Datenbytes und `R-ORG = A5`. Er liest `DATA[1:5]` als `DB3…DB0` und `DATA[5:9]` als Sender-ID in Großbuchstaben. Die ID muss zur lokal gesetzten `SENSOR_ID` passen. Status und Empfangsmetadaten bleiben außerhalb der Messwerte.
+3. Der Ingestor speichert den letzten empfangenen Teil jedes Typs pro Sender. Beim ersten vollständigen Paar und bei jedem späteren passenden Telegramm schreibt er eine Zeile mit beiden Teilen, `sensor_id` und dem UTC-Zeitpunkt des Pi in `readings`. Bis ein neuer Teil eintrifft, wird dessen zuletzt empfangener Wert weiterverwendet. `/api/latest` liefert daraus die letzte Messung. Zeitreihen und Kalender verwenden die Messhistorie.
+
+Die Implementierung steht im [ESP3-Reader](ingestor/esp3.py) und im [Ingestor](ingestor/enocean_ingestor.py).
+
+[Eltako · FWS61-Telegramme](https://www.eltako.com/fileadmin/downloads/en/_main_catalogue/Gesamt-Katalog_ChT_gb_highRes.pdf) · [EnOcean · ESP3, Abschnitte 1 und 2.1](https://www.enocean.com/wp-content/uploads/Knowledge-Base/EnOceanSerialProtocol3-1.pdf)
+
 ## Tests
 
 Mit installierten Abhängigkeiten aus dem Projektordner ausführen.

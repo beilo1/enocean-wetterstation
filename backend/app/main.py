@@ -17,7 +17,8 @@ from . import analytics, config, db, dwd, forecast, govee, periods, queries, rai
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-_SCHEMA = (Path(__file__).resolve().parents[2] / "db" / "schema.sql").read_text(encoding="utf-8")
+_ROOT = Path(__file__).resolve().parents[2]
+_SCHEMA = (_ROOT / "db" / "schema.sql").read_text(encoding="utf-8")
 
 
 @asynccontextmanager
@@ -46,7 +47,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title="Wetterstation",
     description="Außenmessungen der Dachstation, DWD-Vergleich, Govee-Raumklima und Wetterprognose.",
-    version="2.0.2",
+    version="2.0.3",
     lifespan=lifespan,
     # Eingebautes Swagger deaktivieren – wir liefern eine eigene Seite,
     # die ins App-Layout integriert ist (siehe /api-docs unten).
@@ -437,8 +438,13 @@ async def maintenance_page():
 
 @app.get("/install-guide.md", include_in_schema=False)
 async def install_guide():
-    return FileResponse(Path(__file__).resolve().parents[2] / "DEPLOY.md",
+    return FileResponse(_ROOT / "DEPLOY.md",
                         media_type="text/markdown; charset=utf-8", filename="DEPLOY.md")
+
+
+@app.get("/license", include_in_schema=False)
+async def project_license():
+    return FileResponse(_ROOT / "LICENSE", media_type="text/plain")
 
 
 app.mount("/", StaticFiles(directory=str(_frontend)), name="frontend")

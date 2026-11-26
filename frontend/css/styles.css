@@ -187,6 +187,31 @@ a.outline-button { text-decoration: none; }
 .comfort-strip dd { font-weight: 750; }
 .other-charts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 16px; }
 .site-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; column-gap: 16px; padding: 25px 0 34px; font-size: 14px; color: var(--muted); }
+.project-footer-link {
+  min-height: 40px; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer;
+}
+.project-footer-link:hover { color: var(--text); }
+.project-repository { margin-left: .2em; text-decoration: underline; text-underline-offset: 3px; }
+.project-dialog {
+  width: min(650px, calc(100% - 30px)); max-height: min(90vh, 90dvh); padding: 0;
+  border: 1px solid var(--line-2); border-radius: 16px; background: var(--panel); color: var(--text); box-shadow: var(--shadow);
+}
+.project-dialog::backdrop { background: #15251eb0; }
+.project-dialog-header {
+  position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 13px clamp(15px, 4vw, 24px); background: var(--panel); border-bottom: 1px solid var(--line);
+}
+.dashboard .project-dialog-header h2 { font-size: clamp(19px, 4vw, 24px); }
+.project-dialog-header button { flex: none; }
+.project-dialog-content { padding: 18px clamp(15px, 4vw, 24px) 22px; }
+.project-notice { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 20px; }
+.project-notice > div { flex: 1 1 240px; min-width: 0; }
+.project-notice p { overflow-wrap: anywhere; }
+.project-notice p + p { margin-top: 5px; }
+.project-qr { display: block; width: 132px; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.project-license { margin-top: 14px; }
+.project-license summary { color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.project-license-content { display: grid; gap: 10px; margin-top: 10px; font-size: .9rem; }
 @media (max-width: 930px) {
   .dashboard .shell { width: calc(100% - 42px); }
   .overview-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
@@ -269,6 +294,12 @@ a.outline-button { text-decoration: none; }
 .docs-table-scroll table { border-collapse: collapse; width: 100%; min-width: 490px; font-size: 14px; }
 .docs-table-scroll th, .docs-table-scroll td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 .docs-table-scroll th { color: var(--muted); }
+.docs-table-scroll th[scope="row"] { white-space: nowrap; }
+.telegram-values table { min-width: 745px; }
+.telegram-bits { margin-top: 13px; }
+.telegram-bits summary { color: var(--accent); cursor: pointer; }
+#enocean-datagramme .console-block code { padding: 0; background: transparent; font: inherit; }
+#enocean-datagramme li + li { margin-top: 6px; }
 .content-card code, .page-note code { padding: 1px 4px; border-radius: 4px; background: var(--panel-2); overflow-wrap: anywhere; font: .91em var(--mono); }
 .api-search { width: min(100%, 410px); margin-bottom: 10px; }
 .api-group h2 { margin-bottom: 11px; }

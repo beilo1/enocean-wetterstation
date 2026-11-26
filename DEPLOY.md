@@ -151,7 +151,7 @@ Die Befehle setzen den Standardpfad `/opt/wetter-station` und die Datenbank `wet
 
 ### 1. Quellcode und Sicherung vorbereiten
 
-Hole die neue Fassung in einen getrennten Ordner wie in Schritt 3 der Neuinstallation beschrieben. Setze `source_dir` auf diesen Ordner. Führe die folgenden Befehle in derselben Bash-Sitzung aus.
+Hole die neue Fassung in einen getrennten Ordner wie in Schritt 3 der Neuinstallation beschrieben. Bei einem ZIP kannst du es beispielsweise so übertragen und entpacken, dass `$HOME/enocean-wetterstation/db/schema.sql` existiert. Setze `source_dir` auf den Ordner mit `db/schema.sql`. Führe die folgenden Befehle in derselben Bash-Sitzung aus.
 
 ```bash
 source_dir="$HOME/enocean-wetterstation"
@@ -186,7 +186,11 @@ Prüfe insbesondere `DATABASE_URL` und `SENSOR_ID`. Trage Standortkoordinaten ex
 ```bash
 sudo systemctl start wetter-backend wetter-ingestor
 curl -fsS http://127.0.0.1:8000/healthz
+curl -fsS http://127.0.0.1:8000/openapi.json | python3 -c 'import json, sys; print(json.load(sys.stdin)["info"]["version"])'
+curl -fsS http://127.0.0.1:8000/license | head -n 3
 ```
+
+Für diese Fassung zeigt die Versionsabfrage `2.0.3`. Unter **Dokumentation → EnOcean-Datagramme** findest du die Beispielrahmen und die Feldtabelle. Über die Fußzeile öffnest du den Dialog mit GitHub-Link, QR-Code und lokalem Lizenztext.
 
 Prüfe anschließend die [Funktionen](#funktion-prüfen). Bei älteren Govee-Daten mit bestätigter falscher Temperatureinheit zeigt `venv/bin/python scripts/fix_govee_fahrenheit.py --help`, wie du für eine konkrete Geräte-ID und einen bestätigten Zeitraum eine Vorschau erstellst. Prüfe die Vorschau und sichere die Datenbank, bevor du `--apply` einsetzt.
 

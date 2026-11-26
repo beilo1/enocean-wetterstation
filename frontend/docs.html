@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Wetterstation • Dokumentation</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/styles.css?v=2.0.2">
+  <link rel="stylesheet" href="/css/styles.css?v=2.0.3">
   <meta name="theme-color" content="#f7f6f0">
-  <script src="/js/site.js?v=2.0.2" defer></script>
+  <script src="/js/site.js?v=2.0.3" defer></script>
 </head>
 <body class="dashboard">
   <a class="skip-link" href="#content">Zum Inhalt</a>
@@ -32,6 +32,7 @@
     <div class="page-heading"><div><h1>Dokumentation</h1><p>Datenquellen, Auswertungen und Betrieb der Wetterstation.</p></div><a class="outline-button" href="/install-guide.md" download="DEPLOY.md" aria-label="Installationsanleitung herunterladen"><svg class="ui-icon" aria-hidden="true"><use href="/icons.svg#download"></use></svg> Herunterladen</a></div>
     <nav class="section-links" aria-label="Inhalt der Dokumentation">
       <a class="outline-button" href="#datenquellen">Datenquellen</a>
+      <a class="outline-button" href="#enocean-datagramme">EnOcean-Datagramme</a>
       <a class="outline-button" href="#messdaten">Messverläufe</a>
       <a class="outline-button" href="#raumklima">Raumklima</a>
       <a class="outline-button" href="#betrieb">Betrieb und API</a>
@@ -50,6 +51,62 @@
           <tr><td>Open-Meteo</td><td>Wetterzustand, Temperatur und Niederschlag in Stundenauflösung für die konfigurierten Standortkoordinaten.</td><td>Gemeinsamer Zwischenspeicher im Backend</td></tr>
         </tbody>
       </table></div>
+      </section>
+      <section class="card content-card" id="enocean-datagramme">
+      <h2>EnOcean-Datagramme</h2>
+      <p>Der Eltako WMS liefert seine Messwerte per Leitung an das FWS61. Das FWS61 sendet zwei 4BS-Funktelegramme mit derselben Sender-ID (Eltako-Format für A5-13-01 und A5-13-02). Ein EnOcean-USB-Stick oder eine Fam4Pi-Platine empfängt sie und gibt sie als ESP3-Rahmen über die serielle Schnittstelle an den Raspberry Pi weiter. Der Ingestor öffnet <code>SERIAL_PORT</code> mit standardmäßig 57.600 Baud (8 Datenbits, keine Parität, 1 Stoppbit).</p>
+      <h3>ESP3-Rahmen im Beispiel</h3>
+      <p>Senkrechte Striche markieren die Feldgrenzen. Die Sender-ID <code>A1 B2 C3 D4</code> und alle Messwerte sind erfunden.</p>
+      <pre class="console-block" tabindex="0" aria-label="Beispielrahmen in Hex"><code>Teil 1 · Wetter:     55 | 00 0A 07 01 | EB | A5 40 80 12 1A A1 B2 C3 D4 00 | 01 FF FF FF FF 3C 00 | B9
+Teil 2 · Helligkeit: 55 | 00 0A 07 01 | EB | A5 36 9C 24 28 A1 B2 C3 D4 00 | 01 FF FF FF FF 3C 00 | 2D</code></pre>
+      <div class="docs-table-scroll" tabindex="0" role="region" aria-label="Felder des ESP3-Rahmens">
+        <table>
+          <thead><tr><th scope="col">Feld</th><th scope="col">Hex</th><th scope="col">Bedeutung</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Sync</th><td><code>55</code></td><td>Beginn des seriellen ESP3-Rahmens.</td></tr>
+            <tr><th scope="row">Header</th><td><code>00 0A 07 01</code></td><td>10 Byte DATA, 7 Byte OPTIONAL_DATA, Pakettyp 01 (RADIO_ERP1).</td></tr>
+            <tr><th scope="row">Header-CRC</th><td><code>EB</code></td><td>CRC-8 über die vier Header-Bytes.</td></tr>
+            <tr><th scope="row">DATA</th><td><code>A5 · DB3 DB2 DB1 DB0 · A1 B2 C3 D4 · 00</code></td><td>4BS-Typ A5, vier Wetterdatenbytes, vier Byte Sender-ID, ein Statusbyte.</td></tr>
+            <tr><th scope="row">OPTIONAL_DATA</th><td><code>01 FF FF FF FF 3C 00</code></td><td>Empfangsmetadaten. Im Beispiel Subtelegramm-Zähler 1, Broadcast-Ziel, RSSI −60 dBm, Security Level 0.</td></tr>
+            <tr><th scope="row">Daten-CRC</th><td><code>B9 / 2D</code></td><td>CRC-8 über DATA und OPTIONAL_DATA, je nach Telegramm.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <details class="telegram-bits">
+        <summary>Vollständige Rahmen in Binärdarstellung</summary>
+        <pre class="console-block" tabindex="0" aria-label="Beispielrahmen in Binärdarstellung"><code>Teil 1
+01010101 | 00000000 00001010 00000111 00000001 | 11101011 | 10100101 01000000 10000000 00010010 00011010 10100001 10110010 11000011 11010100 00000000 | 00000001 11111111 11111111 11111111 11111111 00111100 00000000 | 10111001
+
+Teil 2
+01010101 | 00000000 00001010 00000111 00000001 | 11101011 | 10100101 00110110 10011100 00100100 00101000 10100001 10110010 11000011 11010100 00000000 | 00000001 11111111 11111111 11111111 11111111 00111100 00000000 | 00101101</code></pre>
+      </details>
+      <h3>Datenbytes und Messwerte</h3>
+      <pre class="console-block" tabindex="0" aria-label="Datenbytes in Hex und Binär"><code>Teil   Hex          Bits (DB3 → DB0)
+1      40 80 12 1A  01000000 10000000 00010010 00011010
+2      36 9C 24 28  00110110 10011100 00100100 00101000</code></pre>
+      <p>Die Bits sind pro Byte vom höchstwertigen zum niederwertigsten Bit dargestellt (<code>b7…b0</code>). <code>x</code> ist der vorzeichenlose Dezimalwert des Datenbytes. Im ersten Teil unterscheiden sich <code>1A</code> (<code>00011010</code>, nass) und <code>18</code> (<code>00011000</code>, trocken) in Bit <code>b1</code>. Der Ingestor vergleicht das vollständige <code>DB0</code>. <code>28</code> (<code>00101000</code>) kennzeichnet den zweiten Teil.</p>
+      <div class="docs-table-scroll telegram-values" tabindex="0" role="region" aria-label="Umrechnung in Messwerte">
+        <table>
+          <thead><tr><th scope="col">Position</th><th scope="col">Messgröße</th><th scope="col">Hex</th><th scope="col">Dezimal</th><th scope="col">Feld in <code>readings</code></th><th scope="col">Umrechnung</th><th scope="col">Beispielwert</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">1 · DB3</th><td>Dämmerungshelligkeit</td><td><code>40</code></td><td>64</td><td><code>twilight_lux</code></td><td>x × 1000 / 255</td><td>250,98 lx</td></tr>
+            <tr><th scope="row">1 · DB2</th><td>Außentemperatur</td><td><code>80</code></td><td>128</td><td><code>temperature_c</code></td><td>x × 120 / 255 − 40</td><td>20,24 °C</td></tr>
+            <tr><th scope="row">1 · DB1</th><td>Windgeschwindigkeit</td><td><code>12</code></td><td>18</td><td><code>wind_ms</code></td><td>x × 70 / 255</td><td>4,94 m/s</td></tr>
+            <tr><th scope="row">1 · DB0</th><td>Regen und Kennung</td><td><code>1A</code></td><td>26</td><td><code>rain</code></td><td>1A → true · 18 → false</td><td>Regen (nass)</td></tr>
+            <tr><th scope="row">2 · DB3</th><td>Helligkeit West</td><td><code>36</code></td><td>54</td><td><code>west_klux</code></td><td>x × 150 / 255</td><td>31,76 kLux</td></tr>
+            <tr><th scope="row">2 · DB2</th><td>Helligkeit Süd</td><td><code>9C</code></td><td>156</td><td><code>south_klux</code></td><td>x × 150 / 255</td><td>91,76 kLux</td></tr>
+            <tr><th scope="row">2 · DB1</th><td>Helligkeit Ost</td><td><code>24</code></td><td>36</td><td><code>east_klux</code></td><td>x × 150 / 255</td><td>21,18 kLux</td></tr>
+            <tr><th scope="row">2 · DB0</th><td>Kennung für Teil 2</td><td><code>28</code></td><td>40</td><td>–</td><td>28 → Helligkeitsteil</td><td>Teil 2</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Empfang, Filterung und Speicherung</h3>
+      <ol>
+        <li>Der ESP3-Reader sucht <code>55</code>, liest Längen und Pakettyp aus dem Header und trennt <code>DATA</code> von <code>OPTIONAL_DATA</code>. Er liest beide CRC-Bytes mit und überspringt sie bei der Auswertung.</li>
+        <li>Der Ingestor akzeptiert <code>RADIO_ERP1</code> (<code>01</code>) mit mindestens zehn Datenbytes und <code>R-ORG = A5</code>. Er liest <code>DATA[1:5]</code> als <code>DB3…DB0</code> und <code>DATA[5:9]</code> als Sender-ID in Großbuchstaben. Die ID muss zur lokal gesetzten <code>SENSOR_ID</code> passen. Status und Empfangsmetadaten bleiben außerhalb der Messwerte.</li>
+        <li>Der Ingestor speichert den letzten empfangenen Teil jedes Typs pro Sender. Beim ersten vollständigen Paar und bei jedem späteren passenden Telegramm schreibt er eine Zeile mit beiden Teilen, <code>sensor_id</code> und dem UTC-Zeitpunkt des Pi in <code>readings</code>. Bis ein neuer Teil eintrifft, wird dessen zuletzt empfangener Wert weiterverwendet. <code>/api/latest</code> liefert daraus die letzte Messung. Zeitreihen und Kalender verwenden die Messhistorie.</li>
+      </ol>
+      <p><a href="https://www.eltako.com/fileadmin/downloads/en/_main_catalogue/Gesamt-Katalog_ChT_gb_highRes.pdf">Eltako · FWS61-Telegramme</a> · <a href="https://www.enocean.com/wp-content/uploads/Knowledge-Base/EnOceanSerialProtocol3-1.pdf">EnOcean · ESP3, Abschnitte 1 und 2.1</a></p>
       </section>
       <section class="card content-card" id="messdaten"><h2>Messverläufe und Regen</h2>
       <p>Das Außendiagramm zeigt Dachstation und DWD-Vergleich. Die Dachstation nutzt für 24 Stunden fünfminütige Werte aus den Rohmessungen, für sieben und 30 Tage <code>readings_hourly</code> und für 365 Tage <code>readings_daily</code>. Der Kalender nutzt ebenfalls Tageswerte. Für eigene Zeiträume gelten Wechsel der Auflösung nach zwei und 45 Tagen.</p>
