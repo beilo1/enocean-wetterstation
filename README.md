@@ -22,11 +22,15 @@ Das Backend speichert die über die Govee-API abrufbaren Messwerte standardmäß
 
 ## Screenshots
 
-Die **Übersicht** zeigt aktuelle Außenmessungen, Prognose und Zeitreihen. Alle sichtbaren Werte und Gerätenamen sind frei erfunden.
+Die Screenshots verwenden Beispieldaten. Die **Wetterübersicht** zeigt Außenmessungen der Dachstation, die Stundenprognose und den Temperaturverlauf mit DWD-Vergleich.
 
-![Übersicht mit Außenmessungen, stündlicher Wetterprognose und Temperaturverläufen](docs/screenshots/uebersicht.png)
+![Wetterübersicht mit Außenmessungen, Stundenprognose, Regenstatus und Temperaturverlauf](docs/screenshots/uebersicht.png)
 
-Der **Kalender** zeigt die höchste Temperatur je Tag und die Jahresstatistik anhand synthetischer Messwerte.
+Die eigene Seite **Raumklima** vergleicht Arbeitszimmer, Kinderzimmer, Küche und Wohnzimmer. Die Detailansicht zeigt hier Temperatur, relative Luftfeuchte und Taupunkt fürs Wohnzimmer.
+
+![Raumklima mit vier Räumen, Zeitraum- und Auflösungswahl sowie Temperatur, relativer Luftfeuchte und Taupunkt im Wohnzimmer](docs/screenshots/raumklima.png)
+
+Der **Kalender** zeigt die höchste Temperatur je Tag und die Jahresstatistik.
 
 ![Jahreskalender mit Temperatur-Heatmap und Wetterstatistik](docs/screenshots/kalender.png)
 

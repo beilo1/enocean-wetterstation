@@ -175,7 +175,11 @@ a.outline-button { text-decoration: none; }
 .key { width: 19px; border-top: 3px solid var(--temp); border-radius: 2px; }
 .dwd-key { border-color: var(--dwd); border-top-style: dashed; }
 .indoor-card { margin-top: 16px; scroll-margin-top: 16px; }
-.indoor-controls { align-items: end; gap: 9px 14px; margin-bottom: 16px; }
+.indoor-controls { align-items: end; gap: 12px 14px; margin-bottom: 16px; }
+.indoor-control { display: grid; gap: 5px; min-width: 0; max-width: 100%; }
+.indoor-control > span { color: var(--muted); font-size: 14px; font-weight: 650; }
+.indoor-controls .segments button:not(:disabled):not([aria-pressed="true"]):hover { background: var(--selection); color: var(--text); }
+.indoor-controls .segments button:disabled { opacity: .48; cursor: default; }
 .humidity-key { border-color: var(--wind); }
 .dew-key { border-color: var(--dusk); border-top-style: dashed; }
 .device-list { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 14px; color: var(--muted); font-size: 14px; }

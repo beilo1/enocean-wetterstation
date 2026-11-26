@@ -192,7 +192,7 @@ curl -fsS http://127.0.0.1:8000/openapi.json | python3 -c 'import json, sys; pri
 curl -fsS http://127.0.0.1:8000/license | head -n 3
 ```
 
-Für diese Fassung zeigt die Versionsabfrage `2.1.0`. Bestehende Govee-Messreihen sind sofort unter **Raumklima** verfügbar. Für das Update von 2.0.3 genügt der Austausch des Codes. Abhängigkeiten, Dienstdateien und Datenbankschema sind identisch. Die produktive `.env` kann unverändert weiterverwendet werden.
+Für diese Fassung zeigt die Versionsabfrage `2.1.1`. Bestehende Govee-Messreihen sind sofort unter **Raumklima** verfügbar. Für das Update von 2.1.0 genügt der Austausch des Codes. Abhängigkeiten, Dienstdateien und Datenbankschema sind identisch. Die produktive `.env` kann unverändert weiterverwendet werden.
 
 Prüfe anschließend die [Funktionen](#funktion-prüfen). Bei älteren Govee-Daten mit bestätigter falscher Temperatureinheit zeigt `venv/bin/python scripts/fix_govee_fahrenheit.py --help`, wie du für eine konkrete Geräte-ID und einen bestätigten Zeitraum eine Vorschau erstellst. Prüfe die Vorschau und sichere die Datenbank, bevor du `--apply` einsetzt.
 

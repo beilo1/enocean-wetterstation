@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#f7f6f0">
   <title>Wetterstation • Raumklima</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/css/styles.css?v=2.1.0">
-  <script src="/js/site.js?v=2.1.0" defer></script>
+  <link rel="stylesheet" href="/css/styles.css?v=2.1.1">
+  <script src="/js/site.js?v=2.1.1" defer></script>
   <script src="/vendor/echarts.min.js" defer></script>
-  <script src="/js/series.js?v=2.1.0" defer></script>
-  <script src="/js/charts.js?v=2.1.0" defer></script>
-  <script src="/js/indoor.js?v=2.1.0" defer></script>
+  <script src="/js/series.js?v=2.1.1" defer></script>
+  <script src="/js/charts.js?v=2.1.1" defer></script>
+  <script src="/js/indoor.js?v=2.1.1" defer></script>
 </head>
 <body class="dashboard subpage indoor-page">
   <a class="skip-link" href="#content">Zum Inhalt</a>
@@ -38,27 +38,32 @@
       <div><h1>Raumklima</h1><p>Temperatur, relative Luftfeuchte und Taupunkt deiner Govee-Sensoren.</p></div>
     </div>
     <div class="section-actions indoor-controls">
-        <div class="segments" id="rangePicker" role="group" aria-label="Zeitraum">
+      <div class="indoor-control">
+        <span id="indoorRangeLabel">Zeitraum</span>
+        <div class="segments" id="rangePicker" role="group" aria-labelledby="indoorRangeLabel">
           <button type="button" data-range="24h" aria-pressed="true">24 Std.</button>
           <button type="button" data-range="7d" aria-pressed="false">7 Tage</button>
           <button type="button" data-range="30d" aria-pressed="false">30 Tage</button>
           <button type="button" data-range="365d" aria-pressed="false">12 Monate</button>
           <button type="button" data-range="custom" aria-pressed="false">Eigener</button>
         </div>
-      <label class="control-label">Auflösung
-        <select class="field" id="indoorResolution">
-          <option value="auto">Automatisch</option>
-          <option value="5m">5 Minuten</option>
-          <option value="1h">1 Stunde</option>
-          <option value="1d">1 Tag</option>
-        </select>
-      </label>
-      <label class="control-label">Y-Skalierung
-        <select class="field" id="indoorScale">
-          <option value="auto">Automatisch</option>
-          <option value="zero">Mit Nullpunkt</option>
-        </select>
-      </label>
+      </div>
+      <div class="indoor-control">
+        <span id="indoorResolutionLabel">Auflösung</span>
+        <div class="segments" id="indoorResolution" role="group" aria-labelledby="indoorResolutionLabel">
+          <button type="button" data-value="auto" aria-pressed="true">Auto</button>
+          <button type="button" data-value="5m" data-max-days="7" aria-pressed="false" title="Für Zeiträume bis 7 Tage">5 Min.</button>
+          <button type="button" data-value="1h" data-max-days="45" aria-pressed="false" title="Für Zeiträume bis 45 Tage">1 Std.</button>
+          <button type="button" data-value="1d" aria-pressed="false">1 Tag</button>
+        </div>
+      </div>
+      <div class="indoor-control">
+        <span id="indoorScaleLabel">Y-Skalierung</span>
+        <div class="segments" id="indoorScale" role="group" aria-labelledby="indoorScaleLabel">
+          <button type="button" data-value="auto" aria-pressed="true">Auto</button>
+          <button type="button" data-value="zero" aria-pressed="false">Mit Nullpunkt</button>
+        </div>
+      </div>
     </div>
     <form class="custom-range" id="customRange" hidden>
       <label>Von <input type="date" name="start" required></label>
@@ -67,8 +72,6 @@
       <span id="rangeError" role="status"></span>
     </form>
     <p class="chart-status" id="trendStatus" role="status">Govee-Messungen werden geladen …</p>
-
-
     <section class="card chart-card" aria-labelledby="houseTitle">
       <div class="card-heading"><div><h2 id="houseTitle">Innentemperaturen im Haus</h2><p>Temperaturverlauf im Raumvergleich</p></div><span class="heading-icon indoor-icon" aria-hidden="true"><svg class="ui-icon"><use href="/icons.svg#home"></use></svg></span></div>
       <div id="houseDevices" class="device-list" role="group" aria-label="Temperaturkurven ein- und ausblenden"></div>

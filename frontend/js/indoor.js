@@ -11,6 +11,7 @@ const initialPeriod = { range: "24h", start: "", end: "" };
 const indoor = {
   period: initialPeriod, displayedPeriod: initialPeriod, request: null, comfortRequest: null,
   series: null, catalog: null, selected: null, devices: [],
+  resolution: "auto", scale: "auto",
 };
 
 const hiddenKey = "wetter-hidden-indoor-devices";
@@ -22,10 +23,9 @@ try {
 
 function indoorChartOptions() {
   const period = indoor.displayedPeriod;
-  const withZero = $("indoorScale").value === "zero";
   return {
     timeFormat: period.range === "24h" ? clock : periodDays(period) <= 2 ? timestamp : undefined,
-    yAxis: { scale: !withZero },
+    yAxis: { scale: indoor.scale !== "zero" },
   };
 }
 
@@ -145,7 +145,7 @@ async function loadIndoor() {
   indoor.request = controller;
   const period = indoor.period;
   const params = periodParams(period);
-  params.set("resolution", $("indoorResolution").value);
+  params.set("resolution", indoor.resolution);
   const [series, catalog] = await Promise.allSettled([
     json("/api/indoor?" + params, controller.signal),
     indoor.catalog || json("/api/indoor/devices", controller.signal),
@@ -197,17 +197,39 @@ $("roomDevices").addEventListener("click", event => {
 });
 
 const resolution = $("indoorResolution");
+const scale = $("indoorScale");
+
+function setPressedChoice(group, value) {
+  for (const button of group.querySelectorAll("button")) {
+    button.setAttribute("aria-pressed", button.dataset.value === value);
+  }
+}
+
 bindPeriodControls(period => {
   indoor.period = period;
-  for (const [value, maxDays] of [["5m", 7], ["1h", 45]]) {
-    const option = resolution.querySelector('option[value="' + value + '"]');
-    option.disabled = periodDays(period) > maxDays;
-    if (option.disabled && resolution.value === value) resolution.value = "auto";
+  const days = periodDays(period);
+  for (const button of resolution.querySelectorAll("[data-max-days]")) {
+    button.disabled = days > Number(button.dataset.maxDays);
+    if (button.disabled && indoor.resolution === button.dataset.value) indoor.resolution = "auto";
   }
+  setPressedChoice(resolution, indoor.resolution);
   loadIndoor();
 });
-resolution.addEventListener("change", loadIndoor);
-$("indoorScale").addEventListener("change", () => { renderHouse(); renderRoom(); });
+resolution.addEventListener("click", event => {
+  const button = event.target.closest("button:not(:disabled)");
+  if (!button || button.dataset.value === indoor.resolution) return;
+  indoor.resolution = button.dataset.value;
+  setPressedChoice(resolution, indoor.resolution);
+  loadIndoor();
+});
+scale.addEventListener("click", event => {
+  const button = event.target.closest("button");
+  if (!button || button.dataset.value === indoor.scale) return;
+  indoor.scale = button.dataset.value;
+  setPressedChoice(scale, indoor.scale);
+  renderHouse();
+  renderRoom();
+});
 document.addEventListener("theme-changed", () => { renderHouse(); renderRoom(); });
 loadIndoor();
 setInterval(() => {

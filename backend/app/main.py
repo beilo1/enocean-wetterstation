@@ -48,7 +48,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(
     title="Wetterstation",
     description="Außenmessungen der Dachstation, DWD-Vergleich, Govee-Raumklima und Wetterprognose.",
-    version="2.1.0",
+    version="2.1.1",
     lifespan=lifespan,
     # Eingebautes Swagger deaktivieren – wir liefern eine eigene Seite,
     # die ins App-Layout integriert ist (siehe /api-docs unten).
